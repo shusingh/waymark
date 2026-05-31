@@ -131,6 +131,25 @@ def test_tui_journey_map_shows_memory_health(tmp_path: Path) -> None:
     asyncio.run(run_flow())
 
 
+def test_tui_today_screen_shows_daily_loop(tmp_path: Path) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(120, 36)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#today"))
+            await pilot.pause(0.2)
+
+            today_text = str(app.screen.query_one("#today-brief", Static).content)
+            assert "Captures Today" in today_text
+            assert "Reflection Windows" in today_text
+            assert "Next Commands" in today_text
+            assert "waymark capture --type daily" in today_text
+
+    asyncio.run(run_flow())
+
+
 def test_tui_journey_prompt_opens_prefilled_capture(tmp_path: Path) -> None:
     async def run_flow() -> None:
         db_path = tmp_path / "waymark.sqlite3"

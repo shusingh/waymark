@@ -93,6 +93,7 @@ from waymark.storage import (
     update_entry,
 )
 from waymark.system import collect_system_profile
+from waymark.today import build_today_brief, format_today_brief, parse_today_date
 
 MEMORY_TYPES = ("daily", "project", "work", "career", "health", "decision", "learning", "personal")
 
@@ -213,6 +214,7 @@ class WaymarkScreen(Screen[None]):
 
     BINDINGS = [
         Binding("m", "show_menu", "Menu"),
+        Binding("y", "show_today", "Today"),
         Binding("c", "show_capture", "Capture"),
         Binding("t", "show_timeline", "Timeline"),
         Binding("r", "show_reflect", "Reflect"),
@@ -235,6 +237,9 @@ class WaymarkScreen(Screen[None]):
 
     async def action_show_capture(self) -> None:
         await self.app.push_screen(CaptureScreen(self.db_path))
+
+    async def action_show_today(self) -> None:
+        await self.app.push_screen(TodayScreen(self.db_path))
 
     async def action_show_timeline(self) -> None:
         await self.app.push_screen(TimelineScreen(self.db_path))
@@ -274,16 +279,17 @@ class MainMenuScreen(WaymarkScreen):
             yield Static("Your private memory trail, searchable from the terminal.", id="tagline")
             with Vertical(id="menu-panel"):
                 yield Button("[1] Capture a Moment", id="capture", variant="primary")
-                yield Button("[2] Ask Waymark", id="ask")
-                yield Button("[3] Timeline", id="timeline")
-                yield Button("[4] Memory Detail", id="memory")
-                yield Button("[5] Reflect", id="reflect")
-                yield Button("[6] Decisions", id="decisions")
-                yield Button("[7] Import My World", id="import")
-                yield Button("[8] Export Markdown", id="export")
-                yield Button("[9] Journey Map", id="journey")
-                yield Button("[10] Backup / Restore", id="backup")
-                yield Button("[11] Doctor", id="doctor")
+                yield Button("[2] Today", id="today")
+                yield Button("[3] Ask Waymark", id="ask")
+                yield Button("[4] Timeline", id="timeline")
+                yield Button("[5] Memory Detail", id="memory")
+                yield Button("[6] Reflect", id="reflect")
+                yield Button("[7] Decisions", id="decisions")
+                yield Button("[8] Import My World", id="import")
+                yield Button("[9] Export Markdown", id="export")
+                yield Button("[10] Journey Map", id="journey")
+                yield Button("[11] Backup / Restore", id="backup")
+                yield Button("[12] Doctor", id="doctor")
             yield Static(
                 "Local AI is optional. Setup shows recommendations before anything is installed.",
                 classes="note",
@@ -294,6 +300,8 @@ class MainMenuScreen(WaymarkScreen):
         button_id = event.button.id
         if button_id == "capture":
             await self.action_show_capture()
+        elif button_id == "today":
+            await self.action_show_today()
         elif button_id == "ask":
             await self.action_show_ask()
         elif button_id == "timeline":
@@ -314,6 +322,43 @@ class MainMenuScreen(WaymarkScreen):
             await self.action_show_backup()
         elif button_id == "doctor":
             await self.app.push_screen(DoctorScreen(self.db_path))
+
+
+class TodayScreen(WaymarkScreen):
+    """Daily loop summary."""
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        with Container(id="shell"):
+            yield Static("Today", classes="screen-title")
+            yield Static(
+                "A quick return point for captures, reflections, and decisions.",
+                classes="subtle",
+            )
+            yield Button("Refresh", id="refresh-today", variant="primary")
+            yield VerticalScroll(Static(self.render_today(), id="today-brief"))
+        yield Footer()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "refresh-today":
+            self.query_one("#today-brief", Static).update(self.render_today())
+
+    def render_today(self) -> str:
+        current_date = parse_today_date(None)
+        return format_today_brief(
+            build_today_brief(
+                entries=list_entries(self.db_path, limit=1000),
+                entries_today=list_entries_between(
+                    self.db_path,
+                    period_start=current_date.isoformat(),
+                    period_end=current_date.isoformat(),
+                    limit=100,
+                ),
+                decisions=list_decisions(self.db_path, limit=1000),
+                reflections=list_reflections(self.db_path, limit=1000),
+                today=current_date,
+            )
+        )
 
 
 class CaptureScreen(WaymarkScreen):

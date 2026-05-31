@@ -18,6 +18,8 @@ capture messy thought -> structure memory card -> store locally -> retrieve with
 ## What you can do
 
 - **Capture** a messy thought and turn it into a structured memory card.
+- **Return daily** to see captures, reflection windows, decisions, and next
+  commands.
 - **Browse** a chronological timeline of everything you've saved.
 - **Ask** grounded questions that answer only from your saved memories, with
   citations.

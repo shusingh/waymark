@@ -15,7 +15,7 @@ instead of hand-maintained command lists.
 
 ## What Works
 
-- Guided Textual interface for capture, ask, timeline, memory detail,
+- Guided Textual interface for today, capture, ask, timeline, memory detail,
   reflection, decisions, import, export, backup, and doctor checks.
 - Local SQLite storage with source citations, saved reflections, linked
   decisions, local backups, and portable bundles.
