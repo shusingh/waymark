@@ -1,0 +1,65 @@
+site_name: Waymark
+site_description: A local-first terminal companion for personal memory, reflection, and decisions.
+site_url: https://shusingh.github.io/waymark/
+repo_url: https://github.com/shusingh/waymark
+repo_name: shusingh/waymark
+copyright: Local-first. Your memories never leave your machine.
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: brown
+      accent: amber
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: brown
+      accent: amber
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.instant
+    - navigation.tracking
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+plugins:
+  - search
+  - mkdocs-typer2:
+      pretty: true
+      engine: native
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Guides:
+      - Importing your world: guides/importing.md
+      - Local AI with Ollama: guides/local-ai.md
+      - Backup & restore: guides/backup-restore.md
+  - Reference:
+      - CLI commands: reference/cli.md
+      - Configuration: reference/configuration.md
+      - Data model: reference/data-model.md
+  - Concepts:
+      - Memory-first design: concepts/memory-first.md
+  - Contributing: contributing.md

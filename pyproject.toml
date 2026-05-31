@@ -23,6 +23,11 @@ dependencies = [
 pdf = [
   "pypdf>=4.0"
 ]
+docs = [
+  "mkdocs>=1.6",
+  "mkdocs-material>=9.5",
+  "mkdocs-typer2[mkdocs]>=0.1"
+]
 dev = [
   "mypy>=1.10",
   "pypdf>=4.0",

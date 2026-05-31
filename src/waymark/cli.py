@@ -20,6 +20,7 @@ from waymark.backup import (
     write_backup,
 )
 from waymark.config import build_recommended_config, read_config, write_config
+from waymark.diagnostics import collect_database_health, format_database_health
 from waymark.drafting import build_capture_draft
 from waymark.exports import (
     format_entry_markdown,
@@ -410,6 +411,7 @@ def doctor() -> None:
     profile = collect_system_profile(home)
     config = read_config(config_path())
     runtime_status = get_ollama_status()
+    database_health = collect_database_health(db_path)
 
     table = Table(title="Waymark Doctor", show_header=True, header_style="bold yellow3")
     table.add_column("Check")
@@ -419,6 +421,11 @@ def doctor() -> None:
     table.add_row("App", "ok", f"version {__version__}")
     table.add_row("Home", "ok", str(home))
     table.add_row("Database", "ok", str(db_path))
+    table.add_row(
+        "Database health",
+        "ok" if database_health.ok else "needs attention",
+        format_database_health(database_health),
+    )
     table.add_row(
         "Config",
         "ok" if config else "not set",

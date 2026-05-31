@@ -8,6 +8,7 @@ from pathlib import Path
 from pytest import MonkeyPatch
 from textual.widgets import Button, Input, Static, TextArea
 
+from waymark.backup import write_backup
 from waymark.runtime import ModelRuntimeStatus
 from waymark.storage import (
     add_decision,
@@ -935,6 +936,32 @@ def test_tui_folder_import_handles_mixed_types(
     asyncio.run(run_flow())
 
 
+def test_tui_folder_apply_uses_previewed_file_list(tmp_path: Path) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        folder = tmp_path / "notes"
+        folder.mkdir()
+        (folder / "alpha.md").write_text("# Alpha\n\nPreviewed note.", encoding="utf-8")
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(160, 48)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#import"))
+            await pilot.pause(0.2)
+            app.screen.query_one("#import-path", Input).value = str(folder)
+            await pilot.click(app.screen.query_one("#preview-folder"))
+            await pilot.pause(0.2)
+
+            (folder / "beta.md").write_text("# Beta\n\nAdded after preview.", encoding="utf-8")
+            await pilot.click(app.screen.query_one("#apply-folder"))
+            await pilot.pause(0.2)
+
+        entries = list_entries(db_path)
+        assert [entry.title for entry in entries] == ["Alpha"]
+
+    asyncio.run(run_flow())
+
+
 def test_tui_export_memory_flow_writes_markdown_and_refuses_overwrite(tmp_path: Path) -> None:
     async def run_flow() -> None:
         db_path = tmp_path / "waymark.sqlite3"
@@ -1102,6 +1129,79 @@ def test_tui_export_reflection_trends_flow_writes_scoped_markdown(tmp_path: Path
     asyncio.run(run_flow())
 
 
+def test_tui_backup_screen_creates_and_inspects_backup(tmp_path: Path) -> None:
+    from waymark import tui
+
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        backup_path = tmp_path / "waymark-backup.json"
+        init_database(db_path)
+        add_entry(
+            db_path,
+            raw_text="Back this memory up.",
+            memory_type="project",
+            title="Backup source",
+            summary="Back this memory up.",
+        )
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(160, 48)) as pilot:
+            await pilot.pause(0.2)
+            await app.push_screen(tui.BackupScreen(db_path))
+            await pilot.pause(0.2)
+            app.screen.query_one("#backup-path", Input).value = str(backup_path)
+            await pilot.click(app.screen.query_one("#backup-create"))
+            await pilot.pause(0.2)
+
+            assert backup_path.exists()
+            status = str(app.screen.query_one("#backup-status", Static).content)
+            assert "Backup created" in status
+            assert "entries: 1" in status
+
+            await pilot.click(app.screen.query_one("#backup-info"))
+            await pilot.pause(0.2)
+            status = str(app.screen.query_one("#backup-status", Static).content)
+            assert "Backup created at:" in status
+            assert "entries: 1" in status
+
+    asyncio.run(run_flow())
+
+
+def test_tui_backup_screen_restores_backup(tmp_path: Path) -> None:
+    from waymark import tui
+
+    async def run_flow() -> None:
+        src_db = tmp_path / "source.sqlite3"
+        dest_db = tmp_path / "dest.sqlite3"
+        backup_path = tmp_path / "waymark-backup.json"
+        init_database(src_db)
+        add_entry(
+            src_db,
+            raw_text="Restore this memory.",
+            memory_type="project",
+            title="Restored source",
+            summary="Restore this memory.",
+        )
+        write_backup(src_db, backup_path)
+        app = WaymarkApp(db_path=dest_db)
+
+        async with app.run_test(size=(160, 48)) as pilot:
+            await pilot.pause(0.2)
+            await app.push_screen(tui.BackupScreen(dest_db))
+            await pilot.pause(0.2)
+            app.screen.query_one("#backup-path", Input).value = str(backup_path)
+            await pilot.click(app.screen.query_one("#backup-restore"))
+            await pilot.pause(0.2)
+
+            status = str(app.screen.query_one("#backup-status", Static).content)
+            assert "Restored backup" in status
+            assert "entries: 1" in status
+
+        assert [entry.title for entry in list_entries(dest_db)] == ["Restored source"]
+
+    asyncio.run(run_flow())
+
+
 def test_tui_doctor_shows_model_setup_and_saves_config(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,
@@ -1149,6 +1249,9 @@ def test_tui_doctor_shows_model_setup_and_saves_config(
             assert "ollama pull qwen3:4b" in str(model_setup)
             assert "already present" in str(model_setup)
             assert "No models are downloaded" in str(model_setup)
+            database_health = app.screen.query_one("#doctor-database-health", Static).content
+            assert "Integrity: ok" in str(database_health)
+            assert "Foreign keys: ok" in str(database_health)
 
             await pilot.click(app.screen.query_one("#save-config"))
             await pilot.pause(0.2)

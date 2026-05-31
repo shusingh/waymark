@@ -1,0 +1,93 @@
+# Getting Started
+
+This walkthrough follows Waymark's core loop end to end: capture a memory, find
+it again, ask a grounded question, and reflect.
+
+## 1. Pick where your data lives
+
+By default Waymark stores everything in a per-user home directory. For
+experiments, point it somewhere disposable:
+
+=== "PowerShell"
+
+    ```powershell
+    $env:WAYMARK_HOME = "$PWD\.waymark-runtime"
+    ```
+
+=== "bash"
+
+    ```bash
+    export WAYMARK_HOME="$PWD/.waymark-runtime"
+    ```
+
+Run `waymark doctor` to see the resolved home, your local capability profile, and
+whether Ollama is detected.
+
+## 2. Capture a memory
+
+```bash
+waymark capture --type project "Decided to build the CLI before the desktop app."
+```
+
+Waymark drafts a structured **memory card** — a title, a summary, a type, and
+tags — and saves it. Want to see the draft before committing?
+
+```bash
+waymark capture --preview "Draft this card without saving it yet."
+```
+
+The guided interface (`waymark`) uses a two-step **Draft → Save / Edit / Discard**
+flow for the same capture.
+
+## 3. Browse the timeline
+
+```bash
+waymark timeline
+```
+
+Each row includes a memory **ID**. Open one in detail:
+
+```bash
+waymark memory show 1
+```
+
+## 4. Ask a grounded question
+
+```bash
+waymark ask "CLI first"
+```
+
+Answers are composed **only** from your saved memories and always cite the
+sources they used. If nothing matches, Waymark says so instead of inventing an
+answer. Add `--semantic` to include vector matches once you've generated
+embeddings (see [Local AI](guides/local-ai.md)).
+
+## 5. Reflect
+
+```bash
+waymark reflect --period week
+waymark reflect --period week --save
+```
+
+Reflections are app-only and source-grounded: they summarize counts, types,
+tags, and recent titles rather than inventing patterns. Saved reflections build
+a history you can list, compare, and trend over time.
+
+## 6. Track a decision
+
+```bash
+waymark decision add "Adopt local embeddings?" \
+  --context "Hybrid search would help retrieval." --memory 1
+waymark decision finalize 1 --choice "Yes, opt-in" --confidence 4
+waymark decision outcome 1 --outcome "Retrieval noticeably improved."
+```
+
+## Where to go next
+
+- **[Importing your world](guides/importing.md)** — bring in Markdown, text,
+  PDF, and Word documents.
+- **[Local AI with Ollama](guides/local-ai.md)** — opt into local model
+  structuring and semantic search.
+- **[Backup & restore](guides/backup-restore.md)** — keep your memory trail safe
+  and portable.
+- **[CLI reference](reference/cli.md)** — every command and option.

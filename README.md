@@ -10,6 +10,13 @@ The product direction is memory-first, not file-search-first:
 capture messy thought -> structure memory card -> store locally -> retrieve with sources -> reflect over time
 ```
 
+## Documentation
+
+Full documentation lives at **<https://shusingh.github.io/waymark/>** (built from
+the [`docs/`](docs/) folder with MkDocs Material). Start with
+[Getting Started](docs/getting-started.md) or the auto-generated
+[CLI reference](docs/reference/cli.md).
+
 ## Current Status
 
 This repository is in the early local-first MVP. The current implementation
@@ -122,8 +129,10 @@ Markdown, plain text, PDF, or Word (.docx) file.
 The guided Memory Detail view shows a memory by ID with source and linked
 decision context.
 
-The guided Doctor view shows local capability, Ollama status, recommended model
-commands, and a deliberate Save Safe Config action.
+The guided Doctor view shows local capability, Ollama status, database
+integrity/foreign-key health, recommended model commands, and a deliberate Save
+Safe Config action. The CLI `waymark doctor` reports the same database health
+checks.
 
 Timeline rows include memory IDs, so a recent entry can be opened with
 `waymark memory show ID` or linked to a decision.
@@ -244,8 +253,9 @@ Waymark home — every memory, tag, source, decision, reflection, and embedding 
 to one explicit file (it will not overwrite an existing file without `--force`).
 `waymark backup info FILE` shows what a backup contains without restoring it, and
 `waymark backup restore FILE` rebuilds a home from a backup. Restore refuses to
-clobber a home that already holds memories unless you pass `--force`. Everything
-stays on your machine; nothing is uploaded.
+clobber a home that already holds any user data unless you pass `--force`.
+The guided Backup screen has the same Create, Inspect, and Restore actions.
+Everything stays on your machine; nothing is uploaded.
 
 Decisions can be linked to memories with `--memory` during creation or later via
 `waymark decision link DECISION_ID MEMORY_ID`. `waymark decision show ID`

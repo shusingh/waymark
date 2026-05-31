@@ -279,6 +279,18 @@ def test_setup_models_apply_writes_config_without_downloading(
     assert (tmp_path / "config.json").exists()
 
 
+def test_doctor_reports_database_health(tmp_path: Path) -> None:
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path)}
+
+    result = runner.invoke(app, ["doctor"], env=env)
+
+    assert result.exit_code == 0
+    assert "Database health" in result.output
+    assert "Integrity: ok" in result.output
+    assert "Foreign keys: ok" in result.output
+
+
 def test_timeline_cli_shows_memory_ids(tmp_path: Path) -> None:
     runner = CliRunner()
     env = {"WAYMARK_HOME": str(tmp_path)}

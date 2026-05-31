@@ -607,6 +607,15 @@ def import_folder(
     force: bool = False,
 ) -> FolderImportResult:
     preview = preview_import_folder(root, recursive=recursive, limit=limit)
+    return import_folder_preview(db_path, preview, force=force)
+
+
+def import_folder_preview(
+    db_path: Path,
+    preview: FolderImportPreview,
+    *,
+    force: bool = False,
+) -> FolderImportResult:
     imported: list[FolderImportItem] = []
     duplicates: list[str] = []
     skipped = list(preview.skipped)

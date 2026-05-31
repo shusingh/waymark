@@ -11,7 +11,9 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Static, TextArea
 
 from waymark.ai import structure_memory_with_ollama
+from waymark.backup import BACKUP_TABLES, BackupError, read_backup, restore_backup, write_backup
 from waymark.config import build_recommended_config, read_config, write_config
+from waymark.diagnostics import collect_database_health, format_database_health
 from waymark.drafting import build_capture_draft
 from waymark.exports import (
     format_entry_markdown,
@@ -27,7 +29,7 @@ from waymark.imports import (
     FolderImportPreview,
     MissingImportDependencyError,
     import_docx_file,
-    import_folder,
+    import_folder_preview,
     import_markdown_file,
     import_pdf_file,
     import_text_file,
@@ -180,6 +182,14 @@ def format_model_setup_plan(plan: ModelSetupPlan) -> str:
     return "\n".join(lines)
 
 
+def format_backup_counts(title: str, counts: dict[str, int], total: int) -> str:
+    lines = [title, ""]
+    lines.extend(f"{name}: {count}" for name, count in counts.items())
+    lines.append("")
+    lines.append(f"total: {total}")
+    return "\n".join(lines)
+
+
 def reflection_period_from_command(command: str) -> str:
     parts = command.split()
     if "--period" not in parts:
@@ -205,6 +215,7 @@ class WaymarkScreen(Screen[None]):
         Binding("a", "show_ask", "Ask"),
         Binding("v", "show_memory", "Memory"),
         Binding("j", "show_journey", "Journey"),
+        Binding("b", "show_backup", "Backup"),
         Binding("q", "quit", "Quit"),
     ]
 
@@ -242,6 +253,9 @@ class WaymarkScreen(Screen[None]):
     async def action_show_journey(self) -> None:
         await self.app.push_screen(JourneyScreen(self.db_path))
 
+    async def action_show_backup(self) -> None:
+        await self.app.push_screen(BackupScreen(self.db_path))
+
 
 class MainMenuScreen(WaymarkScreen):
     """The guided Waymark hub."""
@@ -261,7 +275,8 @@ class MainMenuScreen(WaymarkScreen):
                 yield Button("[7] Import My World", id="import")
                 yield Button("[8] Export Markdown", id="export")
                 yield Button("[9] Journey Map", id="journey")
-                yield Button("[10] Doctor", id="doctor")
+                yield Button("[10] Backup / Restore", id="backup")
+                yield Button("[11] Doctor", id="doctor")
             yield Static(
                 "Local AI is optional. Setup shows recommendations before anything is installed.",
                 classes="note",
@@ -288,6 +303,8 @@ class MainMenuScreen(WaymarkScreen):
             await self.action_show_export()
         elif button_id == "journey":
             await self.action_show_journey()
+        elif button_id == "backup":
+            await self.action_show_backup()
         elif button_id == "doctor":
             await self.app.push_screen(DoctorScreen(self.db_path))
 
@@ -1239,7 +1256,6 @@ class ImportScreen(WaymarkScreen):
     def __init__(self, db_path: Path) -> None:
         super().__init__(db_path)
         self.current_folder_preview: FolderImportPreview | None = None
-        self.current_folder_limit: int = 25
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -1403,7 +1419,6 @@ class ImportScreen(WaymarkScreen):
             return
 
         self.current_folder_preview = preview
-        self.current_folder_limit = limit
         self.query_one("#apply-folder", Button).disabled = not preview.files
         self.query_one("#import-status", Static).update(self.format_folder_preview(preview))
 
@@ -1419,11 +1434,9 @@ class ImportScreen(WaymarkScreen):
             return
 
         try:
-            result = import_folder(
+            result = import_folder_preview(
                 self.db_path,
-                preview.root,
-                recursive=preview.recursive,
-                limit=self.current_folder_limit,
+                preview,
             )
         except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as error:
             self.query_one("#import-status", Static).update(str(error))
@@ -1709,6 +1722,114 @@ class ExportScreen(WaymarkScreen):
         return None
 
 
+class BackupScreen(WaymarkScreen):
+    """Guided full local backup and restore."""
+
+    def compose(self) -> ComposeResult:
+        yield Header(show_clock=True)
+        with Container(id="shell"):
+            yield Static("Backup / Restore", classes="screen-title")
+            yield Static(
+                "Create, inspect, or restore one explicit local JSON backup file.",
+                classes="subtle",
+            )
+            with Horizontal(id="backup-controls"):
+                yield Input(placeholder="C:\\path\\to\\waymark-backup.json", id="backup-path")
+                yield Input(value="no", placeholder="force? yes/no", id="backup-force")
+            with Horizontal(id="backup-actions"):
+                yield Button("Create Backup", id="backup-create", variant="primary")
+                yield Button("Inspect Backup", id="backup-info")
+                yield Button("Restore Backup", id="backup-restore", variant="warning")
+            yield Static(
+                "Choose a backup path. Restore refuses to overwrite user data unless force=yes.",
+                id="backup-status",
+            )
+        yield Footer()
+
+    def on_mount(self) -> None:
+        self.query_one("#backup-path", Input).focus()
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "backup-create":
+            self.create_backup_from_form()
+        elif event.button.id == "backup-info":
+            self.inspect_backup_from_form()
+        elif event.button.id == "backup-restore":
+            self.restore_backup_from_form()
+
+    def create_backup_from_form(self) -> None:
+        path = self.parse_backup_path()
+        force = self.parse_force()
+        if path is None or force is None:
+            return
+        try:
+            summary = write_backup(self.db_path, path, force=force)
+        except BackupError as error:
+            self.query_one("#backup-status", Static).update(str(error))
+            return
+
+        self.query_one("#backup-status", Static).update(
+            format_backup_counts(
+                f"Backup created\n{summary.path}",
+                summary.table_counts,
+                summary.total_rows,
+            )
+        )
+
+    def inspect_backup_from_form(self) -> None:
+        path = self.parse_backup_path()
+        if path is None:
+            return
+        try:
+            backup = read_backup(path)
+        except BackupError as error:
+            self.query_one("#backup-status", Static).update(str(error))
+            return
+
+        tables = backup["tables"]
+        counts = {table: len(tables.get(table, [])) for table in BACKUP_TABLES}
+        total = sum(counts.values())
+        created = backup.get("created_at", "unknown")
+        self.query_one("#backup-status", Static).update(
+            format_backup_counts(f"Backup created at: {created}", counts, total)
+        )
+
+    def restore_backup_from_form(self) -> None:
+        path = self.parse_backup_path()
+        force = self.parse_force()
+        if path is None or force is None:
+            return
+        try:
+            backup = read_backup(path)
+            summary = restore_backup(backup, self.db_path, force=force)
+        except BackupError as error:
+            self.query_one("#backup-status", Static).update(str(error))
+            return
+
+        title = "Restored backup"
+        if summary.overwrote:
+            title = "Restored backup and overwrote existing data"
+        self.query_one("#backup-status", Static).update(
+            format_backup_counts(title, summary.table_counts, summary.total_rows)
+        )
+
+    def parse_backup_path(self) -> Path | None:
+        raw_path = self.query_one("#backup-path", Input).value.strip()
+        if not raw_path:
+            self.query_one("#backup-status", Static).update("Enter a backup JSON path.")
+            return None
+        return Path(raw_path)
+
+    def parse_force(self) -> bool | None:
+        raw_flag = self.query_one("#backup-force", Input).value.strip().lower()
+        if raw_flag in {"", "0", "false", "n", "no"}:
+            return False
+        if raw_flag in {"1", "force", "overwrite", "restore", "true", "y", "yes"}:
+            return True
+        self.query_one("#backup-status", Static).update("Force must be yes or no.")
+        return None
+
+
 class DoctorScreen(WaymarkScreen):
     """In-app setup summary."""
 
@@ -1718,6 +1839,7 @@ class DoctorScreen(WaymarkScreen):
         config = read_config(config_path())
         runtime_status = get_ollama_status()
         model_plan = build_model_setup_plan(profile, runtime_status)
+        database_health = collect_database_health(self.db_path)
         yield Header(show_clock=True)
         with Container(id="shell"):
             yield Static("Doctor", classes="screen-title")
@@ -1752,7 +1874,11 @@ class DoctorScreen(WaymarkScreen):
                 id="doctor-model-setup",
                 classes="memory-card",
             )
-            yield Static(f"Database: {self.db_path}", classes="memory-card")
+            yield Static(
+                f"Database: {self.db_path}\n\n{format_database_health(database_health)}",
+                id="doctor-database-health",
+                classes="memory-card",
+            )
             yield Static("No config saved this session.", id="doctor-status", classes="note")
         yield Footer()
 
@@ -2070,6 +2196,36 @@ class WaymarkApp(App[None]):
     }
 
     #export-status {
+        border: solid #3a3128;
+        background: #1b1714;
+        padding: 1 2;
+        height: 1fr;
+    }
+
+    #backup-controls {
+        height: 5;
+        margin: 1 0;
+    }
+
+    #backup-controls #backup-path {
+        width: 1fr;
+    }
+
+    #backup-controls #backup-force {
+        width: 24;
+    }
+
+    #backup-actions {
+        height: 5;
+        margin: 1 0;
+    }
+
+    #backup-actions Button {
+        width: 22;
+        margin: 0 1;
+    }
+
+    #backup-status {
         border: solid #3a3128;
         background: #1b1714;
         padding: 1 2;

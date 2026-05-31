@@ -143,6 +143,28 @@ def test_restore_refuses_nonempty_home_without_force(tmp_path: Path) -> None:
     assert len(list_entries(dest_db)) == 1
 
 
+def test_restore_refuses_source_only_home_without_force(tmp_path: Path) -> None:
+    src_db = tmp_path / "src.sqlite3"
+    _seed_home(src_db)
+    backup = read_backup(write_backup(src_db, tmp_path / "b.json").path)
+
+    dest_db = tmp_path / "dest.sqlite3"
+    init_database(dest_db)
+    add_source(
+        dest_db,
+        source_type="text",
+        path="/notes/orphan.txt",
+        original_filename="orphan.txt",
+    )
+
+    with pytest.raises(BackupError, match="user-data row"):
+        restore_backup(backup, dest_db)
+
+    summary = restore_backup(backup, dest_db, force=True)
+    assert summary.overwrote is True
+    assert [source.original_filename for source in list_sources(dest_db)] == ["a.md"]
+
+
 def test_read_backup_rejects_unknown_version(tmp_path: Path) -> None:
     bad = tmp_path / "bad.json"
     bad.write_text(
@@ -160,3 +182,13 @@ def test_read_backup_rejects_missing_tables_section(tmp_path: Path) -> None:
 
     with pytest.raises(BackupError, match="missing its tables"):
         read_backup(bad)
+
+
+def test_restore_rejects_unknown_backup_columns(tmp_path: Path) -> None:
+    src_db = tmp_path / "src.sqlite3"
+    _seed_home(src_db)
+    backup = read_backup(write_backup(src_db, tmp_path / "b.json").path)
+    backup["tables"]["entries"][0]["unexpected_column"] = "surprise"
+
+    with pytest.raises(BackupError, match="unknown column"):
+        restore_backup(backup, tmp_path / "dest.sqlite3")
