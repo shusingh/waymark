@@ -904,6 +904,37 @@ def test_tui_markdown_folder_preview_then_apply_flow(tmp_path: Path) -> None:
     asyncio.run(run_flow())
 
 
+def test_tui_folder_import_handles_mixed_types(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        folder = tmp_path / "mixed"
+        folder.mkdir()
+        (folder / "a-note.md").write_text("# Alpha\n\nGuided md.", encoding="utf-8")
+        make_docx(folder / "b-note.docx", ["BetaDoc", "Guided doc."])
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(160, 48)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#import"))
+            await pilot.pause(0.2)
+            app.screen.query_one("#import-path", Input).value = str(folder)
+            await pilot.click(app.screen.query_one("#preview-folder"))
+            await pilot.pause(0.2)
+
+            assert list_entries(db_path) == []
+            assert app.screen.query_one("#apply-folder", Button).disabled is False
+
+            await pilot.click(app.screen.query_one("#apply-folder"))
+            await pilot.pause(0.2)
+
+        entries = list_entries(db_path)
+        assert sorted(entry.title for entry in entries) == ["Alpha", "BetaDoc"]
+
+    asyncio.run(run_flow())
+
+
 def test_tui_export_memory_flow_writes_markdown_and_refuses_overwrite(tmp_path: Path) -> None:
     async def run_flow() -> None:
         db_path = tmp_path / "waymark.sqlite3"

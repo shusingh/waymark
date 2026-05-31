@@ -22,17 +22,16 @@ from waymark.exports import (
 )
 from waymark.imports import (
     DuplicateDocxImportError,
-    DuplicateMarkdownImportError,
     DuplicatePdfImportError,
     DuplicateTextImportError,
-    MarkdownFolderPreview,
+    FolderImportPreview,
     MissingImportDependencyError,
     import_docx_file,
+    import_folder,
     import_markdown_file,
-    import_markdown_preview,
     import_pdf_file,
     import_text_file,
-    preview_markdown_folder,
+    preview_import_folder,
 )
 from waymark.journey import (
     build_decision_review_queue,
@@ -1239,7 +1238,8 @@ class ImportScreen(WaymarkScreen):
 
     def __init__(self, db_path: Path) -> None:
         super().__init__(db_path)
-        self.current_folder_preview: MarkdownFolderPreview | None = None
+        self.current_folder_preview: FolderImportPreview | None = None
+        self.current_folder_limit: int = 25
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -1396,13 +1396,14 @@ class ImportScreen(WaymarkScreen):
             return
 
         try:
-            preview = preview_markdown_folder(Path(raw_path), recursive=recursive, limit=limit)
+            preview = preview_import_folder(Path(raw_path), recursive=recursive, limit=limit)
         except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as error:
             self.query_one("#import-status", Static).update(str(error))
             self.clear_folder_preview()
             return
 
         self.current_folder_preview = preview
+        self.current_folder_limit = limit
         self.query_one("#apply-folder", Button).disabled = not preview.files
         self.query_one("#import-status", Static).update(self.format_folder_preview(preview))
 
@@ -1413,30 +1414,30 @@ class ImportScreen(WaymarkScreen):
             return
         if not preview.files:
             self.query_one("#import-status", Static).update(
-                "No previewed Markdown files to import."
+                "No previewed files to import."
             )
             return
 
-        imported = []
-        skipped = []
-        for preview_item in preview.files:
-            try:
-                imported.append(import_markdown_preview(self.db_path, preview_item))
-            except DuplicateMarkdownImportError as error:
-                skipped.append(str(error))
-            except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as error:
-                self.query_one("#import-status", Static).update(str(error))
-                return
+        try:
+            result = import_folder(
+                self.db_path,
+                preview.root,
+                recursive=preview.recursive,
+                limit=self.current_folder_limit,
+            )
+        except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as error:
+            self.query_one("#import-status", Static).update(str(error))
+            return
 
-        lines = [f"Imported {len(imported)} Markdown file(s)."]
+        lines = [f"Imported {len(result.imported)} file(s)."]
         lines.extend(
-            f"#{result.entry_id} {result.title} (source #{result.source_id})"
-            for result in imported
+            f"#{item.entry_id} {item.title} ({item.source_type}, source #{item.source_id})"
+            for item in result.imported
         )
-        if skipped:
+        if result.skipped:
             lines.append("")
             lines.append("Skipped")
-            lines.extend(f"- {item}" for item in skipped)
+            lines.extend(f"- {item}" for item in result.skipped)
         self.query_one("#import-status", Static).update("\n".join(lines))
         self.clear_folder_preview()
 
@@ -1465,7 +1466,7 @@ class ImportScreen(WaymarkScreen):
         self.query_one("#import-status", Static).update("Recursive must be yes or no.")
         return None
 
-    def format_folder_preview(self, preview: MarkdownFolderPreview) -> str:
+    def format_folder_preview(self, preview: FolderImportPreview) -> str:
         mode = "recursive" if preview.recursive else "top-level only"
         lines = [
             f"Folder preview: {preview.root}",
@@ -1476,10 +1477,12 @@ class ImportScreen(WaymarkScreen):
             lines.append("Files")
             for index, preview_item in enumerate(preview.files, start=1):
                 relative_path = preview_item.path.relative_to(preview.root).as_posix()
-                lines.append(f"{index}. {relative_path} - {preview_item.title}")
+                lines.append(
+                    f"{index}. [{preview_item.source_type}] {relative_path} - {preview_item.title}"
+                )
                 lines.append(f"   {preview_item.summary}")
         else:
-            lines.append("No Markdown files found.")
+            lines.append("No supported files found.")
 
         if preview.truncated:
             lines.append("")

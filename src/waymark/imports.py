@@ -16,6 +16,16 @@ TEXT_SUFFIXES = {".txt", ".text"}
 PDF_SUFFIXES = {".pdf"}
 DOCX_SUFFIXES = {".docx"}
 
+# All single-file suffixes a folder import can pick up, mapped to source type.
+IMPORT_SUFFIXES = {
+    ".md": "markdown",
+    ".markdown": "markdown",
+    ".txt": "text",
+    ".text": "text",
+    ".pdf": "pdf",
+    ".docx": "docx",
+}
+
 # WordprocessingML main namespace used inside word/document.xml.
 _DOCX_MAIN_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
 
@@ -50,6 +60,40 @@ class MarkdownFolderPreview:
 class MarkdownFolderImportResult:
     root: Path
     imported: tuple[MarkdownImportResult, ...]
+    skipped: tuple[str, ...]
+    truncated: bool
+    recursive: bool
+
+
+@dataclass(frozen=True)
+class FolderFilePreview:
+    path: Path
+    source_type: str
+    title: str
+    summary: str
+
+
+@dataclass(frozen=True)
+class FolderImportPreview:
+    root: Path
+    files: tuple[FolderFilePreview, ...]
+    skipped: tuple[str, ...]
+    truncated: bool
+    recursive: bool
+
+
+@dataclass(frozen=True)
+class FolderImportItem:
+    source_type: str
+    source_id: int
+    entry_id: int
+    title: str
+
+
+@dataclass(frozen=True)
+class FolderImportResult:
+    root: Path
+    imported: tuple[FolderImportItem, ...]
     skipped: tuple[str, ...]
     truncated: bool
     recursive: bool
@@ -477,6 +521,119 @@ def import_markdown_folder(
     )
 
 
+# Union of the single-file import result types a folder import can produce.
+_ImportResult = (
+    MarkdownImportResult | TextImportResult | PdfImportResult | DocxImportResult
+)
+
+# Errors raised when a single previewed file is already imported.
+_DUPLICATE_IMPORT_ERRORS = (
+    DuplicateMarkdownImportError,
+    DuplicateTextImportError,
+    DuplicatePdfImportError,
+    DuplicateDocxImportError,
+)
+
+
+def _preview_importable_file(path: Path) -> FolderFilePreview:
+    source_type = IMPORT_SUFFIXES[path.suffix.lower()]
+    if source_type == "markdown":
+        preview: MarkdownImportPreview | TextImportPreview | PdfImportPreview | DocxImportPreview
+        preview = preview_markdown_file(path)
+    elif source_type == "text":
+        preview = preview_text_file(path)
+    elif source_type == "pdf":
+        preview = preview_pdf_file(path)
+    else:
+        preview = preview_docx_file(path)
+    return FolderFilePreview(
+        path=preview.path,
+        source_type=source_type,
+        title=preview.title,
+        summary=preview.summary,
+    )
+
+
+def _import_importable_file(db_path: Path, path: Path, *, force: bool) -> _ImportResult:
+    source_type = IMPORT_SUFFIXES[path.suffix.lower()]
+    if source_type == "markdown":
+        return import_markdown_file(db_path, path, force=force)
+    if source_type == "text":
+        return import_text_file(db_path, path, force=force)
+    if source_type == "pdf":
+        return import_pdf_file(db_path, path, force=force)
+    return import_docx_file(db_path, path, force=force)
+
+
+def preview_import_folder(
+    root: Path,
+    *,
+    recursive: bool = False,
+    limit: int = 25,
+) -> FolderImportPreview:
+    resolved_root = validate_import_folder(root)
+    if limit < 1:
+        raise ValueError("Folder import limit must be at least 1.")
+
+    previews: list[FolderFilePreview] = []
+    skipped: list[str] = []
+    truncated = False
+
+    for path in iter_importable_paths(resolved_root, recursive=recursive):
+        if len(previews) >= limit:
+            truncated = True
+            break
+        try:
+            previews.append(_preview_importable_file(path))
+        except (OSError, UnicodeDecodeError, ValueError, MissingImportDependencyError) as error:
+            skipped.append(f"{path}: {error}")
+
+    return FolderImportPreview(
+        root=resolved_root,
+        files=tuple(previews),
+        skipped=tuple(skipped),
+        truncated=truncated,
+        recursive=recursive,
+    )
+
+
+def import_folder(
+    db_path: Path,
+    root: Path,
+    *,
+    recursive: bool = False,
+    limit: int = 25,
+    force: bool = False,
+) -> FolderImportResult:
+    preview = preview_import_folder(root, recursive=recursive, limit=limit)
+    imported: list[FolderImportItem] = []
+    skipped = list(preview.skipped)
+    for item in preview.files:
+        try:
+            result = _import_importable_file(db_path, item.path, force=force)
+        except _DUPLICATE_IMPORT_ERRORS as error:
+            skipped.append(str(error))
+            continue
+        except (OSError, UnicodeDecodeError, ValueError, MissingImportDependencyError) as error:
+            skipped.append(f"{item.path}: {error}")
+            continue
+        imported.append(
+            FolderImportItem(
+                source_type=item.source_type,
+                source_id=result.source_id,
+                entry_id=result.entry_id,
+                title=result.title,
+            )
+        )
+    return FolderImportResult(
+        root=preview.root,
+        imported=tuple(imported),
+        skipped=tuple(skipped),
+        truncated=preview.truncated,
+        recursive=preview.recursive,
+    )
+
+
 def validate_markdown_file(path: Path) -> Path:
     resolved_path = path.expanduser().resolve()
     if not resolved_path.exists():
@@ -528,6 +685,26 @@ def validate_markdown_folder(path: Path) -> Path:
     if not resolved_path.is_dir():
         raise ValueError("Markdown folder import requires a folder path.")
     return resolved_path
+
+
+def validate_import_folder(path: Path) -> Path:
+    resolved_path = path.expanduser().resolve()
+    if not resolved_path.exists():
+        raise FileNotFoundError(f"Import folder not found: {resolved_path}")
+    if not resolved_path.is_dir():
+        raise ValueError("Folder import requires a folder path.")
+    return resolved_path
+
+
+def iter_importable_paths(root: Path, *, recursive: bool = False) -> Iterator[Path]:
+    candidates = root.rglob("*") if recursive else root.iterdir()
+    sorted_candidates = sorted(
+        candidates,
+        key=lambda candidate: candidate.relative_to(root).as_posix().lower(),
+    )
+    for candidate in sorted_candidates:
+        if candidate.is_file() and candidate.suffix.lower() in IMPORT_SUFFIXES:
+            yield candidate
 
 
 def iter_markdown_paths(root: Path, *, recursive: bool = False) -> Iterator[Path]:

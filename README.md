@@ -75,6 +75,8 @@ waymark import pdf .\docs\brief.pdf --preview
 waymark import docx .\docs\weekly.docx
 waymark import markdown-folder .\notes
 waymark import markdown-folder .\notes --apply
+waymark import folder .\dropbox
+waymark import folder .\dropbox --apply --recursive
 waymark sources list
 waymark export memory 1 .\exports\memory-1.md
 waymark export timeline .\exports\timeline.md --limit 20
@@ -216,6 +218,14 @@ images, or embedded objects) with the same preview and duplicate-path options.
 explicit folder without importing them. Add `--apply` to import the previewed
 files, `--recursive` to include nested folders, and `--limit` to bound the
 batch. Duplicate file paths are skipped during apply unless `--force` is used.
+
+`waymark import folder FOLDER` is the same preview-then-apply flow across every
+supported file type at once (`.md`, `.markdown`, `.txt`, `.text`, `.pdf`,
+`.docx`). It previews by default and only writes entries with `--apply`,
+honouring `--recursive`, `--limit`, and `--force`. Unreadable files (or PDFs with
+no extractable text) are reported in the skipped list instead of stopping the
+batch. The guided Import screen's Preview Folder / Apply Preview actions use this
+same multi-type flow.
 
 `waymark sources list` shows imported source metadata. Ask results include the
 source filename when a memory came from an imported file.

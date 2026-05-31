@@ -17,11 +17,13 @@ from waymark.imports import (
     extract_markdown_title,
     extract_pdf_text,
     import_docx_file,
+    import_folder,
     import_markdown_file,
     import_markdown_folder,
     import_pdf_file,
     import_text_file,
     preview_docx_file,
+    preview_import_folder,
     preview_markdown_file,
     preview_markdown_folder,
     preview_pdf_file,
@@ -362,3 +364,91 @@ def test_import_pdf_file_skips_duplicate_path_by_default(
     forced = import_pdf_file(db_path, pdf_path, force=True)
     assert forced.entry_id == 2
     assert len(list_sources(db_path)) == 2
+
+
+def test_preview_import_folder_requires_a_folder(tmp_path: Path) -> None:
+    file_path = tmp_path / "note.md"
+    file_path.write_text("# Note", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="folder path"):
+        preview_import_folder(file_path)
+
+
+def test_preview_import_folder_picks_up_supported_types(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    (folder / "a-note.md").write_text("# Markdown One\n\nMd body.", encoding="utf-8")
+    (folder / "b-note.txt").write_text("Text One\n\nTxt body.", encoding="utf-8")
+    make_docx(folder / "c-note.docx", ["Docx One", "Docx body."])
+    (folder / "ignored.json").write_text("{}", encoding="utf-8")
+
+    preview = preview_import_folder(folder)
+
+    assert [item.source_type for item in preview.files] == ["markdown", "text", "docx"]
+    assert [item.title for item in preview.files] == ["Markdown One", "Text One", "Docx One"]
+    assert preview.truncated is False
+    assert preview.skipped == ()
+
+
+def test_preview_import_folder_respects_limit_and_skips_unreadable(tmp_path: Path) -> None:
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    (folder / "a.md").write_text("# Alpha\n\nBody.", encoding="utf-8")
+    (folder / "b.txt").write_text("Bravo\n\nBody.", encoding="utf-8")
+    (folder / "c.md").write_text("   ", encoding="utf-8")
+
+    limited = preview_import_folder(folder, limit=1)
+    assert limited.truncated is True
+    assert len(limited.files) == 1
+
+    full = preview_import_folder(folder, limit=10)
+    assert full.truncated is False
+    assert [item.title for item in full.files] == ["Alpha", "Bravo"]
+    assert len(full.skipped) == 1
+    assert "c.md" in full.skipped[0]
+
+
+def test_import_folder_imports_supported_types_and_skips_duplicates(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    (folder / "a-note.md").write_text("# Markdown One\n\nMd body.", encoding="utf-8")
+    (folder / "b-note.txt").write_text("Text One\n\nTxt body.", encoding="utf-8")
+    make_docx(folder / "c-note.docx", ["Docx One", "Docx body."])
+    init_database(db_path)
+
+    first = import_folder(db_path, folder)
+    assert [item.source_type for item in first.imported] == ["markdown", "text", "docx"]
+    assert len(list_entries(db_path)) == 3
+    assert sorted(source.type for source in list_sources(db_path)) == [
+        "docx",
+        "markdown",
+        "text",
+    ]
+
+    second = import_folder(db_path, folder)
+    assert second.imported == ()
+    assert len(second.skipped) == 3
+    assert "already imported" in second.skipped[0]
+    assert len(list_entries(db_path)) == 3
+
+
+def test_import_folder_includes_pdf(
+    tmp_path: Path, make_minimal_pdf: Callable[[Path, str], Path]
+) -> None:
+    pytest.importorskip("pypdf")
+    db_path = tmp_path / "waymark.sqlite3"
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    make_minimal_pdf(folder / "brief.pdf", "Pdf Heading")
+    (folder / "note.md").write_text("# Markdown\n\nBody.", encoding="utf-8")
+    init_database(db_path)
+
+    result = import_folder(db_path, folder)
+
+    assert sorted(item.source_type for item in result.imported) == ["markdown", "pdf"]
+    assert sorted(source.type for source in list_sources(db_path)) == ["markdown", "pdf"]

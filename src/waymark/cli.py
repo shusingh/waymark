@@ -28,11 +28,13 @@ from waymark.imports import (
     DuplicateTextImportError,
     MissingImportDependencyError,
     import_docx_file,
+    import_folder,
     import_markdown_file,
     import_markdown_folder,
     import_pdf_file,
     import_text_file,
     preview_docx_file,
+    preview_import_folder,
     preview_markdown_folder,
     preview_pdf_file,
 )
@@ -1675,6 +1677,105 @@ def import_markdown_folder_command(
     for index, preview_item in enumerate(preview.files, start=1):
         table.add_row(
             str(index),
+            preview_item.title,
+            preview_item.path.relative_to(preview.root).as_posix(),
+            preview_item.summary,
+        )
+
+    console.print(table)
+    if preview.truncated:
+        console.print(
+            f"[yellow]Preview stopped at --limit {limit}. Increase the limit to see more.[/yellow]"
+        )
+    if preview.skipped:
+        console.print("[yellow]Some files were skipped:[/yellow]")
+        for skipped in preview.skipped:
+            console.print(f"[dim]- {skipped}[/dim]")
+    console.print("[bold]No files were imported.[/bold]")
+    console.print("[dim]Run again with --apply to import the previewed files.[/dim]")
+
+
+@import_app.command("folder")
+def import_folder_command(
+    path: Annotated[Path, typer.Argument(help="Path to a folder of supported files.")],
+    apply: Annotated[
+        bool,
+        typer.Option("--apply", help="Actually import the previewed files."),
+    ] = False,
+    recursive: Annotated[
+        bool,
+        typer.Option("--recursive", help="Include nested folders."),
+    ] = False,
+    limit: Annotated[
+        int,
+        typer.Option("--limit", min=1, max=500, help="Maximum files to preview/import."),
+    ] = 25,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Import files even if their paths were imported before."),
+    ] = False,
+) -> None:
+    """Preview or import all supported files (.md, .txt, .pdf, .docx) from one folder."""
+
+    try:
+        if apply:
+            init_database(database_path())
+            result = import_folder(
+                database_path(),
+                path,
+                recursive=recursive,
+                limit=limit,
+                force=force,
+            )
+        else:
+            preview = preview_import_folder(path, recursive=recursive, limit=limit)
+    except (FileNotFoundError, OSError, ValueError, UnicodeDecodeError) as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    if apply:
+        table = Table(
+            title="Imported Folder",
+            show_header=True,
+            header_style="bold yellow3",
+        )
+        table.add_column("Entry")
+        table.add_column("Source")
+        table.add_column("Type")
+        table.add_column("Title")
+        for imported_item in result.imported:
+            table.add_row(
+                str(imported_item.entry_id),
+                str(imported_item.source_id),
+                imported_item.source_type,
+                imported_item.title,
+            )
+
+        console.print(table)
+        console.print(f"[green]Imported {len(result.imported)} file(s).[/green]")
+        if result.truncated:
+            console.print(f"[yellow]Import stopped at --limit {limit}.[/yellow]")
+            console.print("[dim]Increase the limit to import more.[/dim]")
+        if result.skipped:
+            console.print("[yellow]Some files were skipped:[/yellow]")
+            for skipped in result.skipped:
+                console.print(f"[dim]- {skipped}[/dim]")
+        return
+
+    table = Table(
+        title="Folder Preview",
+        show_header=True,
+        header_style="bold yellow3",
+    )
+    table.add_column("#")
+    table.add_column("Type")
+    table.add_column("Title")
+    table.add_column("File")
+    table.add_column("Summary")
+    for index, preview_item in enumerate(preview.files, start=1):
+        table.add_row(
+            str(index),
+            preview_item.source_type,
             preview_item.title,
             preview_item.path.relative_to(preview.root).as_posix(),
             preview_item.summary,

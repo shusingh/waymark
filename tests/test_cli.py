@@ -1555,6 +1555,52 @@ def test_import_markdown_folder_cli_skips_duplicates(tmp_path: Path) -> None:
     assert "already imported" in second_result.output
 
 
+def test_import_folder_cli_previews_without_importing(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    (folder / "a-note.md").write_text("# Alpha\n\nPreview note.", encoding="utf-8")
+    make_docx(folder / "b-note.docx", ["BetaDoc", "Doc body."])
+
+    result = runner.invoke(app, ["import", "folder", str(folder)], env=env)
+
+    assert result.exit_code == 0
+    assert "Folder Preview" in result.output
+    assert "Alpha" in result.output
+    assert "BetaDoc" in result.output
+    assert "No files were imported" in result.output
+
+    sources_result = runner.invoke(app, ["sources", "list"], env=env)
+    assert sources_result.exit_code == 0
+    assert "No imported sources yet" in sources_result.output
+
+
+def test_import_folder_cli_applies_all_supported_types(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    folder = tmp_path / "mixed"
+    folder.mkdir()
+    (folder / "a-note.md").write_text("# Alpha\n\nApplied note.", encoding="utf-8")
+    (folder / "b-note.txt").write_text("Bravo\n\nApplied text.", encoding="utf-8")
+    make_docx(folder / "c-note.docx", ["CharlieDoc", "Applied doc."])
+
+    result = runner.invoke(app, ["import", "folder", str(folder), "--apply"], env=env)
+
+    assert result.exit_code == 0
+    assert "Imported Folder" in result.output
+    assert "Imported 3 file(s)." in result.output
+
+    sources_result = runner.invoke(app, ["sources", "list"], env=env)
+    assert sources_result.exit_code == 0
+    for source_type in ("markdown", "text", "docx"):
+        assert source_type in sources_result.output
+
+
 def test_export_memory_cli_writes_markdown_and_refuses_overwrite(tmp_path: Path) -> None:
     runner = CliRunner()
     env = {"WAYMARK_HOME": str(tmp_path / "home")}
