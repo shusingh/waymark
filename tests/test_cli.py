@@ -1640,6 +1640,23 @@ def test_backup_cli_create_info_and_restore_roundtrip(tmp_path: Path) -> None:
     assert "Backup me" in timeline.output
 
 
+def test_backup_bundle_cli_writes_portable_folder(tmp_path: Path) -> None:
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    capture = runner.invoke(app, ["capture", "Bundle this memory."], env=env)
+    assert capture.exit_code == 0
+
+    bundle_path = tmp_path / "bundle"
+    result = runner.invoke(app, ["backup", "bundle", str(bundle_path)], env=env)
+
+    assert result.exit_code == 0
+    assert "Portable bundle created" in result.output
+    assert "Wrote" in result.output
+    assert (bundle_path / "waymark-backup.json").exists()
+    assert (bundle_path / "markdown" / "timeline.md").exists()
+    assert (bundle_path / "markdown" / "memories" / "000001-bundle-this-memory.md").exists()
+
+
 def test_backup_restore_cli_refuses_existing_home_without_force(tmp_path: Path) -> None:
     runner = CliRunner()
     env = {"WAYMARK_HOME": str(tmp_path / "home")}

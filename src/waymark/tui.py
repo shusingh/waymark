@@ -11,7 +11,14 @@ from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Input, Static, TextArea
 
 from waymark.ai import structure_memory_with_ollama
-from waymark.backup import BACKUP_TABLES, BackupError, read_backup, restore_backup, write_backup
+from waymark.backup import (
+    BACKUP_TABLES,
+    BackupError,
+    read_backup,
+    restore_backup,
+    write_backup,
+    write_portable_bundle,
+)
 from waymark.config import build_recommended_config, read_config, write_config
 from waymark.diagnostics import collect_database_health, format_database_health
 from waymark.drafting import build_capture_draft
@@ -1740,6 +1747,7 @@ class BackupScreen(WaymarkScreen):
                 yield Button("Create Backup", id="backup-create", variant="primary")
                 yield Button("Inspect Backup", id="backup-info")
                 yield Button("Restore Backup", id="backup-restore", variant="warning")
+                yield Button("Create Bundle", id="backup-bundle")
             yield Static(
                 "Choose a backup path. Restore refuses to overwrite user data unless force=yes.",
                 id="backup-status",
@@ -1756,6 +1764,8 @@ class BackupScreen(WaymarkScreen):
             self.inspect_backup_from_form()
         elif event.button.id == "backup-restore":
             self.restore_backup_from_form()
+        elif event.button.id == "backup-bundle":
+            self.create_bundle_from_form()
 
     def create_backup_from_form(self) -> None:
         path = self.parse_backup_path()
@@ -1811,6 +1821,32 @@ class BackupScreen(WaymarkScreen):
             title = "Restored backup and overwrote existing data"
         self.query_one("#backup-status", Static).update(
             format_backup_counts(title, summary.table_counts, summary.total_rows)
+        )
+
+    def create_bundle_from_form(self) -> None:
+        path = self.parse_backup_path()
+        force = self.parse_force()
+        if path is None or force is None:
+            return
+        try:
+            summary = write_portable_bundle(self.db_path, path, force=force)
+        except BackupError as error:
+            self.query_one("#backup-status", Static).update(str(error))
+            return
+
+        self.query_one("#backup-status", Static).update(
+            "\n".join(
+                [
+                    f"Portable bundle created\n{summary.path}",
+                    "",
+                    f"files: {len(summary.files)}",
+                    f"memories: {summary.memory_count}",
+                    f"reflections: {summary.reflection_count}",
+                    f"sources: {summary.source_count}",
+                    "",
+                    format_backup_counts("Backup rows", summary.table_counts, summary.total_rows),
+                ]
+            )
         )
 
     def parse_backup_path(self) -> Path | None:

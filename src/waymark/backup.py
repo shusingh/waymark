@@ -20,8 +20,14 @@ from waymark.exports import (
     format_reflection_markdown,
     format_timeline_markdown,
 )
-from waymark.storage import connection, init_database, utc_now
-from waymark.storage import list_entries, list_reflections, list_sources
+from waymark.storage import (
+    connection,
+    init_database,
+    list_entries,
+    list_reflections,
+    list_sources,
+    utc_now,
+)
 
 BACKUP_VERSION = 1
 

@@ -101,6 +101,7 @@ waymark decision list
 waymark backup create .\backups\waymark-backup.json
 waymark backup info .\backups\waymark-backup.json
 waymark backup restore .\backups\waymark-backup.json
+waymark backup bundle .\backups\waymark-portable
 ```
 
 `waymark` launches the guided Textual interface. The direct commands remain
@@ -254,7 +255,9 @@ to one explicit file (it will not overwrite an existing file without `--force`).
 `waymark backup info FILE` shows what a backup contains without restoring it, and
 `waymark backup restore FILE` rebuilds a home from a backup. Restore refuses to
 clobber a home that already holds any user data unless you pass `--force`.
-The guided Backup screen has the same Create, Inspect, and Restore actions.
+`waymark backup bundle FOLDER` writes the backup plus readable Markdown exports
+for memories, reflections, timeline, and sources into one portable folder. The
+guided Backup screen has the same Create, Inspect, Restore, and Bundle actions.
 Everything stays on your machine; nothing is uploaded.
 
 Decisions can be linked to memories with `--memory` during creation or later via

@@ -1202,6 +1202,40 @@ def test_tui_backup_screen_restores_backup(tmp_path: Path) -> None:
     asyncio.run(run_flow())
 
 
+def test_tui_backup_screen_creates_portable_bundle(tmp_path: Path) -> None:
+    from waymark import tui
+
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        bundle_path = tmp_path / "bundle"
+        init_database(db_path)
+        add_entry(
+            db_path,
+            raw_text="Bundle this guided memory.",
+            memory_type="project",
+            title="Guided bundle source",
+            summary="Bundle this guided memory.",
+        )
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(170, 52)) as pilot:
+            await pilot.pause(0.2)
+            await app.push_screen(tui.BackupScreen(db_path))
+            await pilot.pause(0.2)
+            app.screen.query_one("#backup-path", Input).value = str(bundle_path)
+            await pilot.click(app.screen.query_one("#backup-bundle"))
+            await pilot.pause(0.2)
+
+            status = str(app.screen.query_one("#backup-status", Static).content)
+            assert "Portable bundle created" in status
+            assert "files:" in status
+
+        assert (bundle_path / "waymark-backup.json").exists()
+        assert (bundle_path / "markdown" / "timeline.md").exists()
+
+    asyncio.run(run_flow())
+
+
 def test_tui_doctor_shows_model_setup_and_saves_config(
     tmp_path: Path,
     monkeypatch: MonkeyPatch,

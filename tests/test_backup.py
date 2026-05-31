@@ -11,6 +11,7 @@ from waymark.backup import (
     read_backup,
     restore_backup,
     write_backup,
+    write_portable_bundle,
 )
 from waymark.storage import (
     add_decision,
@@ -124,6 +125,44 @@ def test_write_backup_refuses_overwrite_without_force(tmp_path: Path) -> None:
 def test_write_backup_requires_existing_database(tmp_path: Path) -> None:
     with pytest.raises(BackupError, match="No Waymark database"):
         write_backup(tmp_path / "missing.sqlite3", tmp_path / "out.json")
+
+
+def test_write_portable_bundle_creates_backup_and_markdown_exports(tmp_path: Path) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    _seed_home(db_path)
+    bundle_path = tmp_path / "bundle"
+
+    summary = write_portable_bundle(db_path, bundle_path)
+
+    assert summary.path == bundle_path.resolve()
+    assert summary.memory_count == 1
+    assert summary.reflection_count == 1
+    assert summary.source_count == 1
+    assert (bundle_path / "waymark-backup.json").exists()
+    assert (bundle_path / "README.md").exists()
+    assert (bundle_path / "markdown" / "timeline.md").exists()
+    assert (bundle_path / "markdown" / "sources.md").exists()
+    assert (bundle_path / "markdown" / "memories" / "000001-event-sourcing-switch.md").exists()
+    assert (bundle_path / "markdown" / "reflections" / "000001-week.md").exists()
+
+    readme = (bundle_path / "README.md").read_text(encoding="utf-8")
+    assert "waymark backup restore" in readme
+    assert "Original imported files are not copied" in readme
+
+
+def test_write_portable_bundle_refuses_nonempty_folder_without_force(tmp_path: Path) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    _seed_home(db_path)
+    bundle_path = tmp_path / "bundle"
+    bundle_path.mkdir()
+    (bundle_path / "existing.txt").write_text("already here", encoding="utf-8")
+
+    with pytest.raises(BackupError, match="not empty"):
+        write_portable_bundle(db_path, bundle_path)
+
+    summary = write_portable_bundle(db_path, bundle_path, force=True)
+    assert summary.path == bundle_path.resolve()
+    assert (bundle_path / "existing.txt").exists()
 
 
 def test_restore_refuses_nonempty_home_without_force(tmp_path: Path) -> None:

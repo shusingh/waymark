@@ -18,6 +18,7 @@ from waymark.backup import (
     read_backup,
     restore_backup,
     write_backup,
+    write_portable_bundle,
 )
 from waymark.config import build_recommended_config, read_config, write_config
 from waymark.diagnostics import collect_database_health, format_database_health
@@ -1920,6 +1921,30 @@ def backup_restore(
     _print_backup_counts(action, summary.table_counts, summary.total_rows)
     console.print(
         f"[green]Restored {summary.total_rows} row(s) into {database_path()}.[/green]"
+    )
+
+
+@backup_app.command("bundle")
+def backup_bundle(
+    path: Annotated[Path, typer.Argument(help="Output folder for the portable bundle.")],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Write into an existing non-empty bundle folder."),
+    ] = False,
+) -> None:
+    """Write a restore-ready backup plus readable Markdown exports to one folder."""
+
+    try:
+        summary = write_portable_bundle(database_path(), path, force=force)
+    except BackupError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    _print_backup_counts("Portable bundle created", summary.table_counts, summary.total_rows)
+    console.print(f"[green]Wrote {len(summary.files)} file(s) to {summary.path}.[/green]")
+    console.print(
+        f"[dim]{summary.memory_count} memories, {summary.reflection_count} reflections, "
+        f"{summary.source_count} sources[/dim]"
     )
 
 
