@@ -8,8 +8,9 @@ your life over time.
 capture messy thought -> structure memory card -> store locally -> retrieve with sources -> reflect over time
 ```
 
-Full documentation lives at **https://shusingh.github.io/waymark/**. The
-complete CLI reference is generated from the Typer app, so use the docs site
+Full documentation lives at **https://shusingh.github.io/waymark/**.
+Downloadable packages live on **https://github.com/shusingh/waymark/releases**.
+The complete CLI reference is generated from the Typer app, so use the docs site
 instead of hand-maintained command lists.
 
 ## What Works
@@ -43,9 +44,10 @@ python -m pip install -e ".[docs]"
 mkdocs serve
 ```
 
-For public downloads, Waymark's first distribution channel is GitHub Releases:
-tagged releases build a wheel and source archive that people can install with
-`pip` or `pipx`. See [Installation & Updates](docs/guides/installation.md).
+For public downloads, Waymark's first distribution channel is
+[GitHub Releases](https://github.com/shusingh/waymark/releases): tagged releases
+build a wheel and source archive that people can install with `pip` or `pipx`.
+See [Installation & Updates](docs/guides/installation.md).
 
 ## First Minute
 

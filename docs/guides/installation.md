@@ -1,9 +1,9 @@
 # Installation & Updates
 
 Waymark is a Python CLI/TUI application. The recommended public download path
-is a GitHub Release containing a wheel and source archive. PyPI publishing can
-come after the first release once the package name and release cadence are
-settled.
+is a [GitHub Release](https://github.com/shusingh/waymark/releases) containing a
+wheel and source archive. PyPI publishing can come after the first release once
+the package name and release cadence are settled.
 
 ## Install from source today
 

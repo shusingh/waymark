@@ -35,9 +35,10 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-Public downloads are built on tagged GitHub Releases as wheels and source
-archives. See **[Installation & Updates](guides/installation.md)** for install
-and release details.
+Public downloads are built on tagged
+[GitHub Releases](https://github.com/shusingh/waymark/releases) as wheels and
+source archives. See **[Installation & Updates](guides/installation.md)** for
+install and release details.
 
 PDF import needs an optional extra:
 
