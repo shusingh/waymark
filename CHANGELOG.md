@@ -11,6 +11,8 @@
 - Surfaced the daily loop in the plain `waymark --plain` welcome menu.
 - Clarified public release install commands with direct `pip` and `pipx` wheel
   URLs.
+- Added a release workflow guard that requires the pushed tag to match the
+  package version.
 - Added a Daily Loop guide to the documentation site.
 - Added CI and release wheel-install smoke tests for built packages.
 

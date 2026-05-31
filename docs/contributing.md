@@ -71,13 +71,42 @@ docs update on the next build.
 ## Cutting a release
 
 Waymark publishes downloadable wheels and source archives through GitHub
-Releases. Push a version tag to start the release workflow:
+Releases. First update `pyproject.toml` and `src/waymark/__init__.py` from the
+development version to the exact public version, then commit that release prep.
+Push a matching version tag to start the release workflow:
+
+```bash
+git commit -am "Prepare release 0.2.0"
+git tag v0.2.0
+git push origin main
+git push origin v0.2.0
+```
+
+The tag must match the package version exactly. For example, `v0.2.0` requires:
+
+```toml
+version = "0.2.0"
+```
+
+and:
+
+```python
+__version__ = "0.2.0"
+```
+
+The workflow verifies the code, confirms the tag/version match, builds the
+package, checks the package metadata, installs the built wheel in a fresh
+environment, and uploads `dist/*` to the release.
+
+After the release, bump `main` back to the next development version:
+
+```bash
+git commit -am "Start 0.3.0 development"
+```
+
+For the first release, the exact commands were:
 
 ```bash
 git tag v0.1.0
 git push origin v0.1.0
 ```
-
-The workflow verifies the code, builds the package, checks the package metadata,
-installs the built wheel in a fresh environment, and uploads `dist/*` to the
-release.
