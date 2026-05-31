@@ -146,6 +146,81 @@ def test_tui_today_screen_shows_daily_loop(tmp_path: Path) -> None:
             assert "Reflection Windows" in today_text
             assert "Next Commands" in today_text
             assert "waymark capture --type daily" in today_text
+            assert app.screen.query_one("#today-reflect", Button).disabled is True
+            assert app.screen.query_one("#today-decisions", Button).disabled is True
+
+    asyncio.run(run_flow())
+
+
+def test_tui_today_capture_action_opens_prefilled_capture(tmp_path: Path) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(120, 36)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#today"))
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#today-capture"))
+            await pilot.pause(0.2)
+
+            assert app.screen.query_one("#memory-type", Input).value == "daily"
+            memory_text = app.screen.query_one("#memory-text", TextArea).text
+            assert "One detail from today" in memory_text
+
+    asyncio.run(run_flow())
+
+
+def test_tui_today_reflect_action_opens_next_due_reflection(tmp_path: Path) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        init_database(db_path)
+        add_entry(
+            db_path,
+            raw_text="A memory from today.",
+            memory_type="daily",
+            title="Today memory",
+            summary="A current memory.",
+            tags=("today",),
+        )
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(120, 36)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#today"))
+            await pilot.pause(0.2)
+
+            assert app.screen.query_one("#today-reflect", Button).disabled is False
+            await pilot.click(app.screen.query_one("#today-reflect"))
+            await pilot.pause(0.2)
+
+            assert app.screen.query_one("#reflect-period", Input).value == "today"
+
+    asyncio.run(run_flow())
+
+
+def test_tui_today_decision_action_opens_decisions(tmp_path: Path) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        init_database(db_path)
+        add_decision(
+            db_path,
+            title="Review this decision",
+            context="It needs attention.",
+            review_date=datetime.now(UTC).date().isoformat(),
+        )
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(120, 36)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#today"))
+            await pilot.pause(0.2)
+
+            assert app.screen.query_one("#today-decisions", Button).disabled is False
+            await pilot.click(app.screen.query_one("#today-decisions"))
+            await pilot.pause(0.2)
+
+            assert app.screen.query_one("#decision-review-queue", Button).disabled is False
 
     asyncio.run(run_flow())
 

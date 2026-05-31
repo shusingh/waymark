@@ -93,7 +93,13 @@ from waymark.storage import (
     update_entry,
 )
 from waymark.system import collect_system_profile
-from waymark.today import build_today_brief, format_today_brief, parse_today_date
+from waymark.today import (
+    DAILY_CAPTURE_PROMPT,
+    TodayBrief,
+    build_today_brief,
+    format_today_brief,
+    parse_today_date,
+)
 
 MEMORY_TYPES = ("daily", "project", "work", "career", "health", "decision", "learning", "personal")
 
@@ -328,6 +334,7 @@ class TodayScreen(WaymarkScreen):
     """Daily loop summary."""
 
     def compose(self) -> ComposeResult:
+        brief = self.build_brief()
         yield Header(show_clock=True)
         with Container(id="shell"):
             yield Static("Today", classes="screen-title")
@@ -335,30 +342,66 @@ class TodayScreen(WaymarkScreen):
                 "A quick return point for captures, reflections, and decisions.",
                 classes="subtle",
             )
-            yield Button("Refresh", id="refresh-today", variant="primary")
-            yield VerticalScroll(Static(self.render_today(), id="today-brief"))
+            with Horizontal(id="today-actions"):
+                yield Button("Refresh", id="refresh-today", variant="primary")
+                yield Button("Capture Daily", id="today-capture")
+                yield Button(
+                    "Reflect Next",
+                    id="today-reflect",
+                    disabled=not brief.reflection_queue.items,
+                )
+                yield Button(
+                    "Review Decisions",
+                    id="today-decisions",
+                    disabled=not today_has_decisions(brief),
+                )
+            yield VerticalScroll(Static(format_today_brief(brief), id="today-brief"))
         yield Footer()
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "refresh-today":
-            self.query_one("#today-brief", Static).update(self.render_today())
-
-    def render_today(self) -> str:
-        current_date = parse_today_date(None)
-        return format_today_brief(
-            build_today_brief(
-                entries=list_entries(self.db_path, limit=1000),
-                entries_today=list_entries_between(
+            self.refresh_today()
+        elif event.button.id == "today-capture":
+            await self.app.push_screen(
+                CaptureScreen(
                     self.db_path,
-                    period_start=current_date.isoformat(),
-                    period_end=current_date.isoformat(),
-                    limit=100,
-                ),
-                decisions=list_decisions(self.db_path, limit=1000),
-                reflections=list_reflections(self.db_path, limit=1000),
-                today=current_date,
+                    initial_memory_type="daily",
+                    initial_text=DAILY_CAPTURE_PROMPT,
+                )
             )
+        elif event.button.id == "today-reflect":
+            item = first_reflection_queue_item(self.build_brief().reflection_queue)
+            if item is not None:
+                await self.app.push_screen(
+                    ReflectScreen(self.db_path, initial_period=item.period_type)
+                )
+        elif event.button.id == "today-decisions":
+            await self.app.push_screen(DecisionsScreen(self.db_path))
+
+    def refresh_today(self) -> None:
+        brief = self.build_brief()
+        self.query_one("#today-brief", Static).update(format_today_brief(brief))
+        self.query_one("#today-reflect", Button).disabled = not brief.reflection_queue.items
+        self.query_one("#today-decisions", Button).disabled = not today_has_decisions(brief)
+
+    def build_brief(self) -> TodayBrief:
+        current_date = parse_today_date(None)
+        return build_today_brief(
+            entries=list_entries(self.db_path, limit=1000),
+            entries_today=list_entries_between(
+                self.db_path,
+                period_start=current_date.isoformat(),
+                period_end=current_date.isoformat(),
+                limit=100,
+            ),
+            decisions=list_decisions(self.db_path, limit=1000),
+            reflections=list_reflections(self.db_path, limit=1000),
+            today=current_date,
         )
+
+
+def today_has_decisions(brief: TodayBrief) -> bool:
+    return bool(brief.decision_queue.due_for_review or brief.decision_queue.waiting_for_outcome)
 
 
 class CaptureScreen(WaymarkScreen):
@@ -2010,6 +2053,15 @@ class WaymarkApp(App[None]):
     Button {
         width: 100%;
         margin: 1 0;
+    }
+
+    #today-actions {
+        height: 5;
+    }
+
+    #today-actions Button {
+        width: 18;
+        margin: 1 1 0 0;
     }
 
     .screen-title {

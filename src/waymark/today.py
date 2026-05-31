@@ -13,9 +13,8 @@ from waymark.journey import (
 from waymark.reflection import ReflectionQueue, build_reflection_queue
 from waymark.storage import Decision, Entry, Reflection
 
-DAILY_CAPTURE_COMMAND = (
-    'waymark capture --type daily "One detail from today that future-me should remember."'
-)
+DAILY_CAPTURE_PROMPT = "One detail from today that future-me should remember."
+DAILY_CAPTURE_COMMAND = f'waymark capture --type daily "{DAILY_CAPTURE_PROMPT}"'
 
 
 @dataclass(frozen=True)
