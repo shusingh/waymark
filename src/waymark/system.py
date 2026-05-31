@@ -147,7 +147,10 @@ class MemoryStatusEx(ctypes.Structure):
 def detect_windows_total_ram_gb() -> float | None:
     status = MemoryStatusEx()
     status.dwLength = ctypes.sizeof(MemoryStatusEx)
-    kernel32: Any = ctypes.windll.kernel32
+    windll: Any = getattr(ctypes, "windll", None)
+    if windll is None:
+        return None
+    kernel32: Any = windll.kernel32
     if not kernel32.GlobalMemoryStatusEx(ctypes.byref(status)):
         return None
     total_physical_bytes = int(status.ullTotalPhys)
