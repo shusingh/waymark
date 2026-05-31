@@ -1506,6 +1506,8 @@ def test_import_markdown_folder_cli_previews_without_importing(tmp_path: Path) -
     result = runner.invoke(app, ["import", "markdown-folder", str(notes_path)], env=env)
 
     assert result.exit_code == 0
+    assert "Legacy command" in result.output
+    assert "waymark import folder" in result.output
     assert "Markdown Folder Preview" in result.output
     assert "Alpha" in result.output
     assert "No files were imported" in result.output
@@ -1530,6 +1532,8 @@ def test_import_markdown_folder_cli_applies_explicitly(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0
+    assert "Legacy command" in result.output
+    assert "waymark import folder" in result.output
     assert "Imported 2 Markdown file" in result.output
 
     sources_result = runner.invoke(app, ["sources", "list"], env=env)

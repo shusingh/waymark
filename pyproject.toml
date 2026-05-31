@@ -12,12 +12,31 @@ license = { text = "MIT" }
 authors = [
   { name = "Waymark Contributors" }
 ]
+keywords = ["local-first", "memory", "notes", "reflection", "sqlite", "terminal"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Text Processing",
+  "Topic :: Utilities"
+]
 dependencies = [
   "platformdirs>=4.2",
   "rich>=13.7",
   "typer>=0.12",
   "textual>=0.80"
 ]
+
+[project.urls]
+Homepage = "https://shusingh.github.io/waymark/"
+Documentation = "https://shusingh.github.io/waymark/"
+Repository = "https://github.com/shusingh/waymark"
+Issues = "https://github.com/shusingh/waymark/issues"
 
 [project.optional-dependencies]
 pdf = [
@@ -29,10 +48,12 @@ docs = [
   "mkdocs-typer2[mkdocs]>=0.1"
 ]
 dev = [
+  "build>=1.2",
   "mypy>=1.10",
   "pypdf>=4.0",
   "pytest>=8.2",
-  "ruff>=0.5"
+  "ruff>=0.5",
+  "twine>=5.0"
 ]
 
 [project.scripts]
@@ -52,4 +73,3 @@ warn_unused_configs = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-

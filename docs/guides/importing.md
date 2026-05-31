@@ -51,6 +51,12 @@ waymark import folder .\dropbox --apply         # import the previewed files
 waymark import folder .\dropbox --apply --recursive --limit 100
 ```
 
+!!! note "Legacy Markdown folder command"
+    `waymark import markdown-folder` still works for older scripts, but new
+    workflows should use `waymark import folder`. The unified command covers
+    Markdown plus text, PDF, and DOCX files with the same preview-first safety
+    model.
+
 A batch **never aborts on a bad file**:
 
 - Files whose path was already imported are reported as **duplicates**.

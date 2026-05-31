@@ -53,6 +53,7 @@ nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Guides:
+      - Installation & Updates: guides/installation.md
       - Importing your world: guides/importing.md
       - Local AI with Ollama: guides/local-ai.md
       - Backup & restore: guides/backup-restore.md

@@ -1,8 +1,9 @@
 # Backup & restore
 
 A Waymark home should be safe to keep, move, and recover — without ever leaving
-your machine. `waymark backup` writes a single, versioned **JSON snapshot** of
-every user-data table and restores it on demand.
+your machine. `waymark backup` writes a versioned **JSON snapshot** of every
+user-data table, restores it on demand, and can create a readable portable
+folder bundle.
 
 ## Create a backup
 
@@ -41,12 +42,30 @@ waymark backup restore .\backups\waymark-backup.json
 Restore is deliberately cautious:
 
 - Into an empty or new home, it simply rebuilds everything.
-- Into a home that **already holds memories**, it refuses unless you pass
+- Into a home that **already holds any user data**, it refuses unless you pass
   `--force`, which clears existing user data first and then restores.
 
 ```bash
 waymark backup restore .\backups\waymark-backup.json --force
 ```
+
+## Create a portable bundle
+
+```bash
+waymark backup bundle .\backups\waymark-portable
+```
+
+A bundle contains:
+
+- `waymark-backup.json` for exact restore
+- `README.md` with restore instructions and counts
+- `markdown/timeline.md`
+- one Markdown file per memory
+- one Markdown file per saved reflection
+- `markdown/sources.md`
+
+Original imported files are not copied into the bundle. Source metadata is kept
+inside the backup and readable `sources.md` export.
 
 ## Move your memory trail to another machine
 

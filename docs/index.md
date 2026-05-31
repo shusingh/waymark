@@ -24,7 +24,8 @@ capture messy thought -> structure memory card -> store locally -> retrieve with
 - **Reflect** over days, weeks, and months, with saved reflection history.
 - **Track decisions** as first-class objects and review their outcomes.
 - **Import** Markdown, text, PDF, and Word documents — single files or folders.
-- **Back up and restore** your entire memory trail to a single local file.
+- **Back up and restore** your entire memory trail to a local backup file or a
+  readable portable folder.
 
 ## Install
 
@@ -33,6 +34,10 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1     # Windows; use source .venv/bin/activate elsewhere
 python -m pip install -e ".[dev]"
 ```
+
+Public downloads are built on tagged GitHub Releases as wheels and source
+archives. See **[Installation & Updates](guides/installation.md)** for install
+and release details.
 
 PDF import needs an optional extra:
 

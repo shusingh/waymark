@@ -1635,7 +1635,12 @@ def import_markdown_folder_command(
         typer.Option("--force", help="Import files even if their paths were imported before."),
     ] = False,
 ) -> None:
-    """Preview or import Markdown files from one explicit folder."""
+    """Legacy Markdown-only folder importer. Prefer `waymark import folder`."""
+
+    console.print(
+        "[yellow]Legacy command:[/yellow] prefer [bold]waymark import folder[/bold] "
+        "for Markdown, text, PDF, and DOCX batches."
+    )
 
     try:
         if apply:

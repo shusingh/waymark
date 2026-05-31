@@ -4,35 +4,25 @@ Waymark is a local-first terminal companion for capturing personal memories,
 tracking decisions, reflecting on patterns, and asking grounded questions about
 your life over time.
 
-The product direction is memory-first, not file-search-first:
-
 ```text
 capture messy thought -> structure memory card -> store locally -> retrieve with sources -> reflect over time
 ```
 
-## Documentation
+Full documentation lives at **https://shusingh.github.io/waymark/**. The
+complete CLI reference is generated from the Typer app, so use the docs site
+instead of hand-maintained command lists.
 
-Full documentation lives at **<https://shusingh.github.io/waymark/>** (built from
-the [`docs/`](docs/) folder with MkDocs Material). Start with
-[Getting Started](docs/getting-started.md) or the auto-generated
-[CLI reference](docs/reference/cli.md).
+## What Works
 
-## Current Status
+- Guided Textual interface for capture, ask, timeline, memory detail,
+  reflection, decisions, import, export, backup, and doctor checks.
+- Local SQLite storage with source citations, saved reflections, linked
+  decisions, local backups, and portable bundles.
+- Explicit imports for Markdown, text, PDF text layers, DOCX paragraphs, and
+  bounded preview-first folder batches.
+- Optional local AI through Ollama for memory structuring and semantic retrieval.
 
-This repository is in the early local-first MVP. The current implementation
-includes:
-
-- A Python package scaffold
-- A `waymark` CLI entrypoint
-- A local SQLite schema
-- Guided Textual flows for capture, timeline, memory detail, reflection,
-  decisions, import, export, and doctor checks
-- CLI commands for capture, retrieval, editing, reflection, decisions,
-  Markdown/text/PDF/DOCX import, Markdown export, full local backup/restore,
-  journey map, and setup
-- A gitignored local handoff folder at `.waymark-local/`
-
-## Setup
+## Install
 
 ```bash
 python -m venv .venv
@@ -40,251 +30,61 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 ```
 
-## First Commands
+PDF import needs the optional PDF extra:
+
+```bash
+python -m pip install -e ".[pdf]"
+```
+
+Docs tooling is separate:
+
+```bash
+python -m pip install -e ".[docs]"
+mkdocs serve
+```
+
+For public downloads, Waymark's first distribution channel is GitHub Releases:
+tagged releases build a wheel and source archive that people can install with
+`pip` or `pipx`. See [Installation & Updates](docs/guides/installation.md).
+
+## First Minute
 
 ```bash
 waymark
-waymark --plain
-waymark tui
-waymark doctor
-waymark setup
-waymark setup --apply
-waymark setup models
-waymark models list
-waymark models check
-waymark embeddings status
-waymark embeddings backfill
-waymark embeddings backfill --apply --limit 10
-waymark capture --type project "I want Waymark to become my private memory terminal."
-waymark capture --preview "Draft this card without saving it yet."
-waymark capture --local-ai "Ask the configured local model to draft this memory."
-waymark capture --local-ai --yes "Save a confirmed local-AI draft in scripts."
+waymark capture --type project "Shipped the first import flow today."
 waymark timeline
-waymark memory show 1
-waymark memory edit 1 --title "Better title" --summary "Clearer summary." --tag project
-waymark ask "private memory"
-waymark ask "private memory" --semantic
-waymark journey
-waymark journey prompts
+waymark ask "import flow"
 waymark reflect --period week
-waymark reflect --period today --save
-waymark reflections list
-waymark reflections due
-waymark reflections due --generate-next
-waymark reflections due --save-next
-waymark reflections compare --period week
-waymark reflections trends --period week
-waymark reflections trends --period week --tag focus --type project
-waymark reflections show 1
-waymark import markdown .\notes\memory.md
-waymark import text .\notes\memory.txt
-waymark import pdf .\docs\brief.pdf
-waymark import pdf .\docs\brief.pdf --preview
-waymark import docx .\docs\weekly.docx
-waymark import markdown-folder .\notes
-waymark import markdown-folder .\notes --apply
-waymark import folder .\dropbox
-waymark import folder .\dropbox --apply --recursive
-waymark sources list
-waymark export memory 1 .\exports\memory-1.md
-waymark export timeline .\exports\timeline.md --limit 20
-waymark export reflection 1 .\exports\reflection-1.md
-waymark export reflection-trends .\exports\reflection-trends.md --period week
-waymark decision add "Build CLI first?" --context "The memory engine matters most." --memory 1
-waymark decision show 1
-waymark decision review
-waymark decision link 1 2
-waymark decision unlink 1 2
-waymark decision finalize 1 --choice "CLI first" --confidence 4
-waymark decision outcome 1 --outcome "The CLI foundation was the right first move."
-waymark decision list
-waymark backup create .\backups\waymark-backup.json
-waymark backup info .\backups\waymark-backup.json
-waymark backup restore .\backups\waymark-backup.json
-waymark backup bundle .\backups\waymark-portable
 ```
 
-`waymark` launches the guided Textual interface. The direct commands remain
-available for scripting, testing, and quick capture.
+Start with [Getting Started](docs/getting-started.md), or open the live
+[CLI reference](https://shusingh.github.io/waymark/reference/cli/).
 
-The guided Capture flow is intentionally two-step: draft a memory card first,
-then choose Save, Edit, or Discard. Its Local AI field defaults to `no`; setting
-it to `yes` uses the configured local model for the draft and still requires
-confirmation before saving.
+## Development
 
-CLI capture can opt into local AI structuring with `--local-ai` or `--ai`. This
-uses the chat model saved in `config.json`, asks local Ollama for JSON fields,
-and falls back to deterministic app-only drafting if config or Ollama is
-unavailable. Before calling the model, Waymark checks read-only Ollama status and
-shows the exact `ollama pull ...` command when the configured chat model is
-missing. Successful local-AI drafts are shown before saving; confirm the prompt
-or pass `--yes` for scripted capture.
+Runtime data defaults to `~/.waymark`. For local development, keep test data out
+of your real profile:
 
-Add `--preview` or `--dry-run` to `waymark capture` to inspect the drafted memory
-card without saving it. This works for both app-only and local-AI drafts.
+```powershell
+$env:WAYMARK_HOME = "D:\Code\waymark\.waymark-local\runtime"
+```
 
-The guided Import flow mirrors that safety model: a folder path must be
-previewed before Apply Preview writes entries. It can also import one explicit
-Markdown, plain text, PDF, or Word (.docx) file.
-
-The guided Memory Detail view shows a memory by ID with source and linked
-decision context.
-
-The guided Doctor view shows local capability, Ollama status, database
-integrity/foreign-key health, recommended model commands, and a deliberate Save
-Safe Config action. The CLI `waymark doctor` reports the same database health
-checks.
-
-Timeline rows include memory IDs, so a recent entry can be opened with
-`waymark memory show ID` or linked to a decision.
-
-The guided Export screen writes one memory, a recent timeline slice, one saved
-reflection, or saved reflection trends to an explicit Markdown path, preserving
-the same overwrite protection as the CLI.
-
-`waymark setup` previews a safe local capability recommendation. `waymark setup
---apply` writes `config.json` with those defaults. `waymark setup models`
-checks the recommended local models against installed Ollama models and prints
-manual `ollama pull ...` commands when a model is missing. These commands do not
-download models, scan folders, or start background indexing.
-
-`waymark reflect` currently generates an app-only, source-grounded reflection
-from saved entries using counts, memory types, tags, and recent titles. It does
-not ask an AI model to infer unsupported patterns yet.
-
-`waymark reflect --save` skips a reflection window that is already saved. Add
-`--force` when you intentionally want another saved copy for the same window.
-
-`waymark reflections list` and `waymark reflections show ID` inspect saved
-reflections. Reflection wins include memory IDs so the source trail remains
-visible.
-
-`waymark reflections due` shows current reflection windows that have saved
-memories but no saved reflection yet. The guided Reflect screen can show the
-same due-window queue, including the latest saved window for that period when
-one exists, list saved reflections, and show one by ID. Add `--generate-next`
-to preview the first due reflection or `--save-next` to save it explicitly. The
-guided Reflect screen has a Generate Due action for the same first due window.
-
-`waymark reflections compare --period week` compares the current generated
-reflection with the latest saved reflection for that period. The guided Reflect
-screen has the same Compare action.
-
-`waymark reflections trends --period week` summarizes saved reflections for a
-period, including repeated patterns, repeated suggestions, and latest summaries.
-Add `--tag` and/or `--type` to include only saved reflection windows that contain
-matching memories. The guided Reflect screen has matching Trend tags and Trend
-types fields for scoped trend review. Use `waymark export reflection ID FILE` or
-`waymark export reflection-trends FILE` to write saved reflection material to
-explicit Markdown files. The reflection-trends export accepts the same
-`--period`, `--tag`, and `--type` scope options.
-
-`waymark journey` shows an app-only memory-health snapshot: recent capture
-rhythm, top memory types/tags, decision review/outcome signals, and saved
-reflection coverage. It includes thin memory areas from the last 30 days,
-capture prompts, adaptive reflection commands, and specific decision IDs for
-open, review, and outcome follow-up. The guided Journey Map screen shows the
-same local summary, plus prompt buttons that open Capture with the suggested
-type and prompt prefilled, and reflection buttons that open Reflect with the
-suggested period selected.
-
-`waymark journey prompts` prints copyable capture commands for the same thin-area
-prompts.
-
-`waymark models list` is a read-only Ollama check. It lists local models when
-Ollama is available and never downloads anything.
-
-`waymark models check` compares the models in `config.json` with installed
-Ollama models. It prints missing-model commands but does not run them.
-
-`waymark embeddings status` shows configured embedding readiness. `waymark
-embeddings backfill` previews entries missing vectors, and `--apply` generates
-embeddings explicitly with the configured local Ollama embedding model. There is
-no background indexing.
-
-`waymark ask "question"` retrieves by keyword and matching tags. `waymark ask
-"question" --semantic` adds explicitly generated embedding vectors and shows
-scored source cards. It does not generate vectors itself; run `waymark
-embeddings backfill --apply` when you want current memories indexed for semantic
-retrieval.
-
-Ask results include a simple grounded answer panel that cites memory IDs and
-only uses retrieved source summaries, followed by the full source cards. The
-guided Ask screen uses the same app-only keyword/tag retrieval path.
-
-`waymark import markdown FILE` imports one explicit Markdown file as a sourced
-memory. It does not scan folders. If the same resolved file path was already
-imported, Waymark skips it unless you add `--force`.
-
-`waymark import text FILE` imports one explicit `.txt` or `.text` file as a
-sourced memory with `import,text` tags and the same duplicate-path protection.
-
-`waymark import pdf FILE` imports one explicit `.pdf` file as a sourced memory.
-It extracts only the existing text layer; scanned or image-only PDFs are not
-OCR'd, and Waymark reports when no text could be extracted. PDF import needs the
-optional `pypdf` package (`pip install waymark[pdf]`). Add `--preview` (or
-`--dry-run`) to inspect the extracted card without saving, and `--force` to
-re-import a path. `waymark import docx FILE` imports one explicit Word `.docx`
-file using only the standard library, extracting paragraph text (no styles,
-images, or embedded objects) with the same preview and duplicate-path options.
-
-`waymark import markdown-folder FOLDER` previews Markdown files from one
-explicit folder without importing them. Add `--apply` to import the previewed
-files, `--recursive` to include nested folders, and `--limit` to bound the
-batch. Duplicate file paths are skipped during apply unless `--force` is used.
-
-`waymark import folder FOLDER` is the same preview-then-apply flow across every
-supported file type at once (`.md`, `.markdown`, `.txt`, `.text`, `.pdf`,
-`.docx`). It previews by default and only writes entries with `--apply`,
-honouring `--recursive`, `--limit`, and `--force`. Unreadable files (or PDFs with
-no extractable text) are reported in the skipped list instead of stopping the
-batch. The guided Import screen's Preview Folder / Apply Preview actions use this
-same multi-type flow.
-
-`waymark sources list` shows imported source metadata. Ask results include the
-source filename when a memory came from an imported file.
-
-`waymark export memory ID FILE`, `waymark export timeline FILE`,
-`waymark export reflection ID FILE`, and `waymark export reflection-trends FILE`
-write Markdown to an explicit output path. Existing files are not overwritten
-unless you add `--force`.
-
-`waymark backup create FILE` writes a full, versioned JSON snapshot of your whole
-Waymark home — every memory, tag, source, decision, reflection, and embedding —
-to one explicit file (it will not overwrite an existing file without `--force`).
-`waymark backup info FILE` shows what a backup contains without restoring it, and
-`waymark backup restore FILE` rebuilds a home from a backup. Restore refuses to
-clobber a home that already holds any user data unless you pass `--force`.
-`waymark backup bundle FOLDER` writes the backup plus readable Markdown exports
-for memories, reflections, timeline, and sources into one portable folder. The
-guided Backup screen has the same Create, Inspect, Restore, and Bundle actions.
-Everything stays on your machine; nothing is uploaded.
-
-Decisions can be linked to memories with `--memory` during creation or later via
-`waymark decision link DECISION_ID MEMORY_ID`. `waymark decision show ID`
-includes linked memory summaries.
-
-`waymark decision review` shows decisions whose review date is due and decided
-items still waiting for an outcome. The guided Decisions screen has the same
-Review Queue action.
-
-`waymark memory show ID` displays the full memory card, its source, and any
-linked decisions.
-
-`waymark memory edit ID` updates selected fields on a saved memory. In the
-guided interface, Memory Detail can load a memory, edit its fields, and save the
-corrected card.
-
-By default, runtime data is stored in `~/.waymark`. For local development, set:
+Before committing code changes:
 
 ```bash
-$env:WAYMARK_HOME = "D:\Code\waymark\.waymark-local\runtime"
+ruff check .
+mypy src
+pytest -q
+mkdocs build --strict
+python -m build
+python -m twine check dist/*
 ```
 
 ## Product Guardrails
 
 - Local-first by default.
-- Manual capture works even without AI models.
+- Manual capture works without AI models.
 - AI-generated summaries, tags, and reflections require user confirmation.
 - Answers must cite saved memories or imported sources.
-- No large model downloads, file scans, OCR, or indexing jobs without explicit approval.
+- No large model downloads, file scans, OCR, or indexing jobs without explicit
+  approval.

@@ -38,21 +38,36 @@ python -m pip install -e ".[dev,pdf,docs]"
 
 ## Verify before committing
 
-All three must pass:
+All checks must pass:
 
 ```bash
 ruff check .
 mypy src
 pytest -q
+mkdocs build --strict
+python -m build
+python -m twine check dist/*
 ```
 
 ## Working on the docs
 
 ```bash
 mkdocs serve          # live preview at http://127.0.0.1:8000
-mkdocs build --strict # fail on warnings/broken links
 ```
 
 The CLI reference page renders directly from the Typer app via
 `mkdocs-typer2`, so it never drifts — add or change a command in `cli.py` and the
 docs update on the next build.
+
+## Cutting a release
+
+Waymark publishes downloadable wheels and source archives through GitHub
+Releases. Push a version tag to start the release workflow:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The workflow verifies the code, builds the package, checks the package metadata,
+and uploads `dist/*` to the release.
