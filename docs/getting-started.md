@@ -95,6 +95,8 @@ waymark decision outcome 1 --outcome "Retrieval noticeably improved."
 
 - **[Importing your world](guides/importing.md)** — bring in Markdown, text,
   PDF, and Word documents.
+- **[Daily loop](guides/daily-loop.md)** — return tomorrow and know what needs
+  attention.
 - **[Local AI with Ollama](guides/local-ai.md)** — opt into local model
   structuring and semantic search.
 - **[Backup & restore](guides/backup-restore.md)** — keep your memory trail safe
