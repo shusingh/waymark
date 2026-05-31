@@ -119,6 +119,16 @@ def test_today_cli_commands_only_prints_next_actions(tmp_path: Path) -> None:
     assert "Today" not in result.output
 
 
+def test_plain_menu_surfaces_today_loop(tmp_path: Path) -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(app, ["--plain"], env={"WAYMARK_HOME": str(tmp_path)})
+
+    assert result.exit_code == 0
+    assert "[1] Today" in result.output
+    assert "waymark today" in result.output
+
+
 def test_decision_cli_add_and_list(tmp_path: Path) -> None:
     runner = CliRunner()
     env = {"WAYMARK_HOME": str(tmp_path)}

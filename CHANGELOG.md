@@ -8,6 +8,7 @@
   due reflection, and decision review directly.
 - Added `waymark today --commands-only` for quick copy/paste or script-friendly
   daily next actions.
+- Surfaced the daily loop in the plain `waymark --plain` welcome menu.
 - Added a Daily Loop guide to the documentation site.
 - Added CI and release wheel-install smoke tests for built packages.
 
