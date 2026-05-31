@@ -12,6 +12,13 @@ from rich.table import Table
 
 from waymark import __version__
 from waymark.ai import LocalAiError, embed_text_with_ollama, structure_memory_with_ollama
+from waymark.backup import (
+    BACKUP_TABLES,
+    BackupError,
+    read_backup,
+    restore_backup,
+    write_backup,
+)
 from waymark.config import build_recommended_config, read_config, write_config
 from waymark.drafting import build_capture_draft
 from waymark.exports import (
@@ -116,6 +123,7 @@ export_app = typer.Typer(help="Export memories and reflections to explicit Markd
 reflections_app = typer.Typer(help="Inspect saved reflections.")
 memory_app = typer.Typer(help="Inspect saved memories.")
 embeddings_app = typer.Typer(help="Build explicit local embedding indexes.")
+backup_app = typer.Typer(help="Create and restore full local backups of your Waymark home.")
 app.add_typer(journey_app, name="journey")
 app.add_typer(decision_app, name="decision")
 app.add_typer(setup_app, name="setup")
@@ -126,6 +134,7 @@ app.add_typer(export_app, name="export")
 app.add_typer(reflections_app, name="reflections")
 app.add_typer(memory_app, name="memory")
 app.add_typer(embeddings_app, name="embeddings")
+app.add_typer(backup_app, name="backup")
 
 
 def show_main_menu() -> None:
@@ -1828,6 +1837,83 @@ def sources_list(
         )
 
     console.print(table)
+
+
+def _print_backup_counts(title: str, counts: dict[str, int], total: int) -> None:
+    table = Table(title=title, show_header=True, header_style="bold yellow3")
+    table.add_column("Table")
+    table.add_column("Rows", justify="right")
+    for name, count in counts.items():
+        table.add_row(name, str(count))
+    table.add_row("[bold]total[/bold]", f"[bold]{total}[/bold]")
+    console.print(table)
+
+
+@backup_app.command("create")
+def backup_create(
+    path: Annotated[Path, typer.Argument(help="Output .json backup file path.")],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Overwrite an existing backup file."),
+    ] = False,
+) -> None:
+    """Write a full JSON backup of your Waymark home to one explicit file."""
+
+    try:
+        summary = write_backup(database_path(), path, force=force)
+    except BackupError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    _print_backup_counts("Backup created", summary.table_counts, summary.total_rows)
+    console.print(f"[green]Wrote {summary.total_rows} row(s) to {summary.path}.[/green]")
+
+
+@backup_app.command("info")
+def backup_info(
+    path: Annotated[Path, typer.Argument(help="Backup .json file to inspect.")],
+) -> None:
+    """Show what a backup file contains without restoring it."""
+
+    try:
+        backup = read_backup(path)
+    except BackupError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    tables = backup["tables"]
+    counts = {table: len(tables.get(table, [])) for table in BACKUP_TABLES}
+    created = backup.get("created_at", "unknown")
+    console.print(f"[dim]Backup created at: {created}[/dim]")
+    _print_backup_counts("Backup contents", counts, sum(counts.values()))
+
+
+@backup_app.command("restore")
+def backup_restore(
+    path: Annotated[Path, typer.Argument(help="Backup .json file to restore from.")],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Overwrite the current home if it already has memories."),
+    ] = False,
+) -> None:
+    """Rebuild your Waymark home from a backup file.
+
+    Refuses to overwrite a home that already holds memories unless --force is
+    passed, in which case existing data is cleared first.
+    """
+
+    try:
+        backup = read_backup(path)
+        summary = restore_backup(backup, database_path(), force=force)
+    except BackupError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    action = "Restored (overwrote existing home)" if summary.overwrote else "Restored"
+    _print_backup_counts(action, summary.table_counts, summary.total_rows)
+    console.print(
+        f"[green]Restored {summary.total_rows} row(s) into {database_path()}.[/green]"
+    )
 
 
 @decision_app.command("add")

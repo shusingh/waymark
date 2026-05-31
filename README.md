@@ -21,7 +21,8 @@ includes:
 - Guided Textual flows for capture, timeline, memory detail, reflection,
   decisions, import, export, and doctor checks
 - CLI commands for capture, retrieval, editing, reflection, decisions,
-  Markdown/text/PDF/DOCX import, Markdown export, journey map, and setup
+  Markdown/text/PDF/DOCX import, Markdown export, full local backup/restore,
+  journey map, and setup
 - A gitignored local handoff folder at `.waymark-local/`
 
 ## Setup
@@ -90,6 +91,9 @@ waymark decision unlink 1 2
 waymark decision finalize 1 --choice "CLI first" --confidence 4
 waymark decision outcome 1 --outcome "The CLI foundation was the right first move."
 waymark decision list
+waymark backup create .\backups\waymark-backup.json
+waymark backup info .\backups\waymark-backup.json
+waymark backup restore .\backups\waymark-backup.json
 ```
 
 `waymark` launches the guided Textual interface. The direct commands remain
@@ -234,6 +238,14 @@ source filename when a memory came from an imported file.
 `waymark export reflection ID FILE`, and `waymark export reflection-trends FILE`
 write Markdown to an explicit output path. Existing files are not overwritten
 unless you add `--force`.
+
+`waymark backup create FILE` writes a full, versioned JSON snapshot of your whole
+Waymark home — every memory, tag, source, decision, reflection, and embedding —
+to one explicit file (it will not overwrite an existing file without `--force`).
+`waymark backup info FILE` shows what a backup contains without restoring it, and
+`waymark backup restore FILE` rebuilds a home from a backup. Restore refuses to
+clobber a home that already holds memories unless you pass `--force`. Everything
+stays on your machine; nothing is uploaded.
 
 Decisions can be linked to memories with `--memory` during creation or later via
 `waymark decision link DECISION_ID MEMORY_ID`. `waymark decision show ID`

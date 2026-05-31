@@ -1601,6 +1601,52 @@ def test_import_folder_cli_applies_all_supported_types(
         assert source_type in sources_result.output
 
 
+def test_backup_cli_create_info_and_restore_roundtrip(tmp_path: Path) -> None:
+    runner = CliRunner()
+    env_a = {"WAYMARK_HOME": str(tmp_path / "home-a")}
+    note = tmp_path / "note.txt"
+    note.write_text("Backup me\n\nThis memory should survive a backup.", encoding="utf-8")
+    assert runner.invoke(app, ["import", "text", str(note)], env=env_a).exit_code == 0
+
+    backup_file = tmp_path / "waymark-backup.json"
+    create = runner.invoke(app, ["backup", "create", str(backup_file)], env=env_a)
+    assert create.exit_code == 0
+    assert "Backup created" in create.output
+    assert backup_file.exists()
+
+    info = runner.invoke(app, ["backup", "info", str(backup_file)], env=env_a)
+    assert info.exit_code == 0
+    assert "Backup contents" in info.output
+
+    env_b = {"WAYMARK_HOME": str(tmp_path / "home-b")}
+    restore = runner.invoke(app, ["backup", "restore", str(backup_file)], env=env_b)
+    assert restore.exit_code == 0
+    assert "Restored" in restore.output
+
+    timeline = runner.invoke(app, ["timeline"], env=env_b)
+    assert timeline.exit_code == 0
+    assert "Backup me" in timeline.output
+
+
+def test_backup_restore_cli_refuses_existing_home_without_force(tmp_path: Path) -> None:
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    note = tmp_path / "note.txt"
+    note.write_text("First memory\n\nBody text.", encoding="utf-8")
+    runner.invoke(app, ["import", "text", str(note)], env=env)
+
+    backup_file = tmp_path / "backup.json"
+    runner.invoke(app, ["backup", "create", str(backup_file)], env=env)
+
+    blocked = runner.invoke(app, ["backup", "restore", str(backup_file)], env=env)
+    assert blocked.exit_code == 1
+    assert "already holds" in blocked.output
+
+    forced = runner.invoke(app, ["backup", "restore", str(backup_file), "--force"], env=env)
+    assert forced.exit_code == 0
+    assert "Restored" in forced.output
+
+
 def test_export_memory_cli_writes_markdown_and_refuses_overwrite(tmp_path: Path) -> None:
     runner = CliRunner()
     env = {"WAYMARK_HOME": str(tmp_path / "home")}
