@@ -28,7 +28,7 @@ instead of hand-maintained command lists.
 Public release:
 
 ```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.1.0/waymark-0.1.0-py3-none-any.whl
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
 ```
 
 From a source checkout:

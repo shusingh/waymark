@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 - 2026-05-31
+
 - Added `waymark today` and a guided Today screen, an app-only daily loop showing
   today's captures, due reflection windows, decision review/outcome items, and
   copyable next commands. The guided screen also opens daily capture, the next
