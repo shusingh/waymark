@@ -94,6 +94,7 @@ class FolderImportItem:
 class FolderImportResult:
     root: Path
     imported: tuple[FolderImportItem, ...]
+    duplicates: tuple[str, ...]
     skipped: tuple[str, ...]
     truncated: bool
     recursive: bool
@@ -607,12 +608,13 @@ def import_folder(
 ) -> FolderImportResult:
     preview = preview_import_folder(root, recursive=recursive, limit=limit)
     imported: list[FolderImportItem] = []
+    duplicates: list[str] = []
     skipped = list(preview.skipped)
     for item in preview.files:
         try:
             result = _import_importable_file(db_path, item.path, force=force)
         except _DUPLICATE_IMPORT_ERRORS as error:
-            skipped.append(str(error))
+            duplicates.append(str(error))
             continue
         except (OSError, UnicodeDecodeError, ValueError, MissingImportDependencyError) as error:
             skipped.append(f"{item.path}: {error}")
@@ -628,6 +630,7 @@ def import_folder(
     return FolderImportResult(
         root=preview.root,
         imported=tuple(imported),
+        duplicates=tuple(duplicates),
         skipped=tuple(skipped),
         truncated=preview.truncated,
         recursive=preview.recursive,

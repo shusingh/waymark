@@ -432,8 +432,9 @@ def test_import_folder_imports_supported_types_and_skips_duplicates(
 
     second = import_folder(db_path, folder)
     assert second.imported == ()
-    assert len(second.skipped) == 3
-    assert "already imported" in second.skipped[0]
+    assert second.skipped == ()
+    assert len(second.duplicates) == 3
+    assert "already imported" in second.duplicates[0]
     assert len(list_entries(db_path)) == 3
 
 

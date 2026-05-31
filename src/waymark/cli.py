@@ -1753,6 +1753,13 @@ def import_folder_command(
 
         console.print(table)
         console.print(f"[green]Imported {len(result.imported)} file(s).[/green]")
+        if result.duplicates:
+            console.print(
+                f"[yellow]{len(result.duplicates)} file(s) were already imported "
+                f"(use --force to re-import):[/yellow]"
+            )
+            for duplicate in result.duplicates:
+                console.print(f"[dim]- {duplicate}[/dim]")
         if result.truncated:
             console.print(f"[yellow]Import stopped at --limit {limit}.[/yellow]")
             console.print("[dim]Increase the limit to import more.[/dim]")

@@ -1434,6 +1434,10 @@ class ImportScreen(WaymarkScreen):
             f"#{item.entry_id} {item.title} ({item.source_type}, source #{item.source_id})"
             for item in result.imported
         )
+        if result.duplicates:
+            lines.append("")
+            lines.append(f"Already imported ({len(result.duplicates)})")
+            lines.extend(f"- {item}" for item in result.duplicates)
         if result.skipped:
             lines.append("")
             lines.append("Skipped")
