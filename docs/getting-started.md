@@ -23,7 +23,16 @@ experiments, point it somewhere disposable:
 Run `waymark doctor` to see the resolved home, your local capability profile, and
 whether Ollama is detected.
 
-## 2. Capture a memory
+## 2. See today's loop
+
+```bash
+waymark today
+```
+
+This shows captures from today, reflection windows that need attention, decision
+review items, and copyable next commands.
+
+## 3. Capture a memory
 
 ```bash
 waymark capture --type project "Decided to build the CLI before the desktop app."
@@ -39,7 +48,7 @@ waymark capture --preview "Draft this card without saving it yet."
 The guided interface (`waymark`) uses a two-step **Draft → Save / Edit / Discard**
 flow for the same capture.
 
-## 3. Browse the timeline
+## 4. Browse the timeline
 
 ```bash
 waymark timeline
@@ -51,7 +60,7 @@ Each row includes a memory **ID**. Open one in detail:
 waymark memory show 1
 ```
 
-## 4. Ask a grounded question
+## 5. Ask a grounded question
 
 ```bash
 waymark ask "CLI first"
@@ -62,7 +71,7 @@ sources they used. If nothing matches, Waymark says so instead of inventing an
 answer. Add `--semantic` to include vector matches once you've generated
 embeddings (see [Local AI](guides/local-ai.md)).
 
-## 5. Reflect
+## 6. Reflect
 
 ```bash
 waymark reflect --period week
@@ -73,7 +82,7 @@ Reflections are app-only and source-grounded: they summarize counts, types,
 tags, and recent titles rather than inventing patterns. Saved reflections build
 a history you can list, compare, and trend over time.
 
-## 6. Track a decision
+## 7. Track a decision
 
 ```bash
 waymark decision add "Adopt local embeddings?" \

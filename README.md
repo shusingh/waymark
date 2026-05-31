@@ -53,6 +53,7 @@ See [Installation & Updates](docs/guides/installation.md).
 
 ```bash
 waymark
+waymark today
 waymark capture --type project "Shipped the first import flow today."
 waymark timeline
 waymark ask "import flow"

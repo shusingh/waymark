@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Added `waymark today`, an app-only daily loop showing today's captures, due
+  reflection windows, decision review/outcome items, and copyable next commands.
+- Added CI and release wheel-install smoke tests for built packages.
+
 ## 0.1.0 - 2026-05-31
 
 Initial public release.

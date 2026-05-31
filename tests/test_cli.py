@@ -10,8 +10,12 @@ from typer.testing import CliRunner
 
 from waymark.cli import app
 from waymark.storage import (
+    add_decision,
+    add_entry,
     add_reflection,
+    connection,
     get_entry_embedding,
+    init_database,
     list_entries,
     list_sources,
     upsert_entry_embedding,
@@ -52,6 +56,46 @@ def write_ollama_embedding_config(home: Path) -> None:
             setup=SetupConfig(completed=True, completed_at="2026-05-30T00:00:00Z"),
         ),
     )
+
+
+def test_today_cli_shows_captures_and_next_actions(tmp_path: Path) -> None:
+    runner = CliRunner()
+    home = tmp_path / "home"
+    home.mkdir()
+    db_path = home / "waymark.sqlite3"
+    init_database(db_path)
+    entry_id = add_entry(
+        db_path,
+        raw_text="Released the package.",
+        memory_type="project",
+        title="Released package",
+        summary="Released the first package.",
+        tags=("release",),
+    )
+    add_decision(
+        db_path,
+        title="Review release channel",
+        context="Confirm the release path works.",
+        review_date="2026-05-30",
+    )
+    with connection(db_path) as conn:
+        conn.execute(
+            "UPDATE entries SET created_at = ?, updated_at = ? WHERE id = ?",
+            ("2026-05-31T10:00:00+00:00", "2026-05-31T10:00:00+00:00", entry_id),
+        )
+
+    result = runner.invoke(
+        app,
+        ["today", "--date", "2026-05-31"],
+        env={"WAYMARK_HOME": str(home)},
+    )
+
+    assert result.exit_code == 0
+    assert "Today" in result.output
+    assert "Released package" in result.output
+    assert "Reflection Windows" in result.output
+    assert "waymark reflect --period today --save" in result.output
+    assert "waymark decision review" in result.output
 
 
 def test_decision_cli_add_and_list(tmp_path: Path) -> None:

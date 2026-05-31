@@ -50,6 +50,7 @@ python -m pip install -e ".[pdf]"
 
 ```bash
 waymark                                   # guided terminal interface
+waymark today                             # what needs attention now
 waymark capture --type project "Shipped the first import flow today."
 waymark timeline
 waymark ask "import flow"

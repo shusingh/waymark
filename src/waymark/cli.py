@@ -108,6 +108,7 @@ from waymark.storage import (
     upsert_entry_embedding,
 )
 from waymark.system import SystemProfile, collect_system_profile
+from waymark.today import build_today_brief, format_today_brief, parse_today_date
 from waymark.tui import run_tui
 
 console = Console()
@@ -688,6 +689,44 @@ def journey_prompts() -> None:
 def capture_prompt_command(memory_type: str, prompt: str) -> str:
     escaped_prompt = prompt.replace('"', '\\"')
     return f'waymark capture --type {memory_type} "{escaped_prompt}"'
+
+
+@app.command("today")
+def today_command(
+    for_date: Annotated[
+        str | None,
+        typer.Option("--date", help="Date to inspect in YYYY-MM-DD format."),
+    ] = None,
+) -> None:
+    """Show today's captures, due reflections, decisions, and next commands."""
+
+    try:
+        current_date = parse_today_date(for_date)
+    except ValueError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    init_database(database_path())
+    entries = list_entries(database_path(), limit=1000)
+    brief = build_today_brief(
+        entries=entries,
+        entries_today=list_entries_between(
+            database_path(),
+            period_start=current_date.isoformat(),
+            period_end=current_date.isoformat(),
+            limit=100,
+        ),
+        decisions=list_decisions(database_path(), limit=1000),
+        reflections=list_reflections(database_path(), limit=1000),
+        today=current_date,
+    )
+    console.print(
+        Panel(
+            format_today_brief(brief),
+            title="Today",
+            border_style="yellow3",
+        )
+    )
 
 
 @app.command()
