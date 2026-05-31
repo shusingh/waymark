@@ -7,6 +7,12 @@ remember a command. The daily loop starts with:
 waymark today
 ```
 
+For a quick copy/paste or shell script view, print only the suggested commands:
+
+```bash
+waymark today --commands-only
+```
+
 This is an app-only summary. It reads your local database and shows:
 
 - captures from today

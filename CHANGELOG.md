@@ -6,6 +6,8 @@
   today's captures, due reflection windows, decision review/outcome items, and
   copyable next commands. The guided screen also opens daily capture, the next
   due reflection, and decision review directly.
+- Added `waymark today --commands-only` for quick copy/paste or script-friendly
+  daily next actions.
 - Added a Daily Loop guide to the documentation site.
 - Added CI and release wheel-install smoke tests for built packages.
 

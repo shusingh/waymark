@@ -98,6 +98,27 @@ def test_today_cli_shows_captures_and_next_actions(tmp_path: Path) -> None:
     assert "waymark decision review" in result.output
 
 
+def test_today_cli_commands_only_prints_next_actions(tmp_path: Path) -> None:
+    runner = CliRunner()
+    home = tmp_path / "home"
+    home.mkdir()
+    db_path = home / "waymark.sqlite3"
+    init_database(db_path)
+
+    result = runner.invoke(
+        app,
+        ["today", "--date", "2026-05-31", "--commands-only"],
+        env={"WAYMARK_HOME": str(home)},
+    )
+
+    assert result.exit_code == 0
+    assert result.output.strip() == (
+        'waymark capture --type daily '
+        '"One detail from today that future-me should remember."'
+    )
+    assert "Today" not in result.output
+
+
 def test_decision_cli_add_and_list(tmp_path: Path) -> None:
     runner = CliRunner()
     env = {"WAYMARK_HOME": str(tmp_path)}

@@ -697,6 +697,10 @@ def today_command(
         str | None,
         typer.Option("--date", help="Date to inspect in YYYY-MM-DD format."),
     ] = None,
+    commands_only: Annotated[
+        bool,
+        typer.Option("--commands-only", help="Print only the suggested next commands."),
+    ] = False,
 ) -> None:
     """Show today's captures, due reflections, decisions, and next commands."""
 
@@ -720,6 +724,10 @@ def today_command(
         reflections=list_reflections(database_path(), limit=1000),
         today=current_date,
     )
+    if commands_only:
+        for command in brief.suggested_commands:
+            typer.echo(command)
+        return
     console.print(
         Panel(
             format_today_brief(brief),
