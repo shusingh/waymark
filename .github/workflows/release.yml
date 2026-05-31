@@ -24,6 +24,12 @@ jobs:
       - run: pytest -q
       - run: python -m build
       - run: python -m twine check dist/*
+      - name: Smoke test built wheel
+        run: |
+          python -m venv .wheel-smoke
+          . .wheel-smoke/bin/activate
+          python -m pip install --disable-pip-version-check dist/*.whl
+          waymark --version
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

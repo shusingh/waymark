@@ -1,4 +1,5 @@
 .venv/
+.wheel-smoke/
 __pycache__/
 *.py[cod]
 *.pyo
@@ -23,4 +24,3 @@ site/
 Thumbs.db
 .idea/
 .vscode/
-

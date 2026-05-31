@@ -49,6 +49,15 @@ python -m build
 python -m twine check dist/*
 ```
 
+CI and release jobs also run a fresh wheel install smoke test:
+
+```bash
+python -m venv .wheel-smoke
+. .wheel-smoke/bin/activate
+python -m pip install dist/*.whl
+waymark --version
+```
+
 ## Working on the docs
 
 ```bash
@@ -70,4 +79,5 @@ git push origin v0.1.0
 ```
 
 The workflow verifies the code, builds the package, checks the package metadata,
-and uploads `dist/*` to the release.
+installs the built wheel in a fresh environment, and uploads `dist/*` to the
+release.

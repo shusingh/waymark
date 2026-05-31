@@ -26,6 +26,12 @@ jobs:
       - run: mkdocs build --strict
       - run: python -m build
       - run: python -m twine check dist/*
+      - name: Smoke test built wheel
+        run: |
+          python -m venv .wheel-smoke
+          . .wheel-smoke/bin/activate
+          python -m pip install --disable-pip-version-check dist/*.whl
+          waymark --version
       - uses: actions/upload-artifact@v4
         with:
           name: waymark-dist-py${{ matrix.python-version }}

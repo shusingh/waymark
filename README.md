@@ -82,6 +82,15 @@ python -m build
 python -m twine check dist/*
 ```
 
+CI and release jobs also run a fresh wheel install smoke test:
+
+```bash
+python -m venv .wheel-smoke
+. .wheel-smoke/bin/activate
+python -m pip install dist/*.whl
+waymark --version
+```
+
 ## Product Guardrails
 
 - Local-first by default.
