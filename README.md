@@ -25,6 +25,14 @@ instead of hand-maintained command lists.
 
 ## Install
 
+Public release:
+
+```bash
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.1.0/waymark-0.1.0-py3-none-any.whl
+```
+
+From a source checkout:
+
 ```bash
 python -m venv .venv
 .venv\Scripts\Activate.ps1
