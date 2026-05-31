@@ -1,63 +1,105 @@
-# Waymark
+<section class="waymark-hero" markdown>
 
-Waymark is a **local-first terminal companion** for capturing personal memories,
-tracking decisions, reflecting on patterns, and asking grounded questions about
-your life over time.
+# Private memory, from the terminal
 
-The product direction is **memory-first, not file-search-first**:
+Waymark is a local-first CLI and guided terminal app for capturing memories,
+tracking decisions, reviewing patterns, and asking grounded questions over your
+own saved context.
+
+</section>
 
 ```text
-capture messy thought -> structure memory card -> store locally -> retrieve with sources -> reflect over time
+capture -> timeline -> ask with sources -> reflect -> review decisions
 ```
 
-!!! info "Private by default"
-    Everything lives in a local SQLite database under your Waymark home. Nothing
-    is uploaded. Local AI is opt-in, models are never downloaded for you, and
-    folders are never scanned without an explicit command.
-
-## What you can do
-
-- **Capture** a messy thought and turn it into a structured memory card.
-- **Return daily** to see captures, reflection windows, decisions, and next
-  commands.
-- **Browse** a chronological timeline of everything you've saved.
-- **Ask** grounded questions that answer only from your saved memories, with
-  citations.
-- **Reflect** over days, weeks, and months, with saved reflection history.
-- **Track decisions** as first-class objects and review their outcomes.
-- **Import** Markdown, text, PDF, and Word documents — single files or folders.
-- **Back up and restore** your entire memory trail to a local backup file or a
-  readable portable folder.
+!!! note "Package name"
+    The PyPI distribution is planned as `waymark-memory` because `waymark` is
+    already used by another package. The installed command remains `waymark`.
 
 ## Install
 
+After PyPI publishing is enabled, install Waymark with `pipx`:
+
+=== "Windows PowerShell"
+
+    ```powershell
+    py -m pip install --user pipx
+    py -m pipx ensurepath
+    py -m pipx install waymark-memory
+    waymark --version
+    ```
+
+=== "macOS"
+
+    ```bash
+    brew install pipx
+    pipx ensurepath
+    pipx install waymark-memory
+    waymark --version
+    ```
+
+=== "Linux"
+
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    python3 -m pipx install waymark-memory
+    waymark --version
+    ```
+
+Until PyPI publishing is enabled, install the latest GitHub Release wheel:
+
 ```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1     # Windows; use source .venv/bin/activate elsewhere
-python -m pip install -e ".[dev]"
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
 ```
 
-Public downloads are built on tagged
-[GitHub Releases](https://github.com/shusingh/waymark/releases) as wheels and
-source archives. See **[Installation & Updates](guides/installation.md)** for
-install and release details.
-
-PDF import needs an optional extra:
+## First minute
 
 ```bash
-python -m pip install -e ".[pdf]"
-```
-
-## Your first minute
-
-```bash
-waymark                                   # guided terminal interface
-waymark today                             # what needs attention now
+waymark today
 waymark capture --type project "Shipped the first import flow today."
 waymark timeline
 waymark ask "import flow"
 waymark reflect --period week
 ```
 
-Continue with **[Getting Started](getting-started.md)**, or jump to the full
-**[CLI reference](reference/cli.md)**.
+## What Waymark Does
+
+<div class="waymark-grid" markdown>
+
+<div class="waymark-card" markdown>
+**Daily loop**
+
+See what needs attention today: new capture, due reflection, or decision review.
+</div>
+
+<div class="waymark-card" markdown>
+**Grounded recall**
+
+Ask questions over saved memories and imported sources with visible citations.
+</div>
+
+<div class="waymark-card" markdown>
+**Decisions**
+
+Track choices, review dates, outcomes, and the memories that informed them.
+</div>
+
+<div class="waymark-card" markdown>
+**Portability**
+
+Back up and restore your local memory trail without sending it to a service.
+</div>
+
+</div>
+
+## Local-First Rules
+
+- Data is stored under your Waymark home in a local SQLite database.
+- Manual capture works without AI models.
+- Local AI is opt-in and uses your own Ollama installation.
+- Folders are never scanned without an explicit command.
+- Generated answers must cite saved memories or imported sources.
+
+Continue with **[Getting Started](getting-started.md)** or the
+**[Installation guide](guides/installation.md)**.

@@ -4,29 +4,33 @@ site_url: https://shusingh.github.io/waymark/
 repo_url: https://github.com/shusingh/waymark
 repo_name: shusingh/waymark
 copyright: Local-first. Your memories never leave your machine.
+extra_css:
+  - stylesheets/extra.css
 
 theme:
   name: material
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: brown
-      accent: amber
+      primary: teal
+      accent: deep orange
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: brown
-      accent: amber
+      primary: teal
+      accent: deep orange
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
   features:
+    - navigation.indexes
     - navigation.sections
     - navigation.top
     - navigation.instant
     - navigation.tracking
+    - navigation.footer
     - search.suggest
     - search.highlight
     - content.code.copy
@@ -41,6 +45,7 @@ plugins:
 markdown_extensions:
   - admonition
   - attr_list
+  - md_in_html
   - tables
   - toc:
       permalink: true

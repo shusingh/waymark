@@ -37,8 +37,14 @@ waymark import pdf .\docs\brief.pdf --preview
 waymark import docx .\docs\weekly.docx --preview
 ```
 
-If `pypdf` is not installed, PDF import exits cleanly with the exact install
-command (`pip install waymark[pdf]`).
+If `pypdf` is not installed, install the PDF extra:
+
+```bash
+pipx inject waymark-memory "waymark-memory[pdf]"
+```
+
+Use `py -m pipx inject ...` on Windows or `python3 -m pipx inject ...` on
+Linux if `pipx` is not on PATH yet.
 
 ## Import a whole folder
 

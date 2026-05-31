@@ -3,7 +3,36 @@
 This walkthrough follows Waymark's core loop end to end: capture a memory, find
 it again, ask a grounded question, and reflect.
 
-## 1. Pick where your data lives
+## 1. Install
+
+=== "Windows PowerShell"
+
+    ```powershell
+    py -m pip install --user pipx
+    py -m pipx ensurepath
+    py -m pipx install waymark-memory
+    ```
+
+=== "macOS"
+
+    ```bash
+    brew install pipx
+    pipx ensurepath
+    pipx install waymark-memory
+    ```
+
+=== "Linux"
+
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    python3 -m pipx install waymark-memory
+    ```
+
+Until PyPI is live, use the GitHub Release wheel from
+[Installation & Updates](guides/installation.md).
+
+## 2. Pick where your data lives
 
 By default Waymark stores everything in a per-user home directory. For
 experiments, point it somewhere disposable:
@@ -23,7 +52,7 @@ experiments, point it somewhere disposable:
 Run `waymark doctor` to see the resolved home, your local capability profile, and
 whether Ollama is detected.
 
-## 2. See today's loop
+## 3. See today's loop
 
 ```bash
 waymark today
@@ -32,7 +61,7 @@ waymark today
 This shows captures from today, reflection windows that need attention, decision
 review items, and copyable next commands.
 
-## 3. Capture a memory
+## 4. Capture a memory
 
 ```bash
 waymark capture --type project "Decided to build the CLI before the desktop app."
@@ -48,7 +77,7 @@ waymark capture --preview "Draft this card without saving it yet."
 The guided interface (`waymark`) uses a two-step **Draft → Save / Edit / Discard**
 flow for the same capture.
 
-## 4. Browse the timeline
+## 5. Browse the timeline
 
 ```bash
 waymark timeline
@@ -60,7 +89,7 @@ Each row includes a memory **ID**. Open one in detail:
 waymark memory show 1
 ```
 
-## 5. Ask a grounded question
+## 6. Ask a grounded question
 
 ```bash
 waymark ask "CLI first"
@@ -71,7 +100,7 @@ sources they used. If nothing matches, Waymark says so instead of inventing an
 answer. Add `--semantic` to include vector matches once you've generated
 embeddings (see [Local AI](guides/local-ai.md)).
 
-## 6. Reflect
+## 7. Reflect
 
 ```bash
 waymark reflect --period week
@@ -82,7 +111,7 @@ Reflections are app-only and source-grounded: they summarize counts, types,
 tags, and recent titles rather than inventing patterns. Saved reflections build
 a history you can list, compare, and trend over time.
 
-## 7. Track a decision
+## 8. Track a decision
 
 ```bash
 waymark decision add "Adopt local embeddings?" \

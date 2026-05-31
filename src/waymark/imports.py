@@ -157,7 +157,7 @@ class MissingImportDependencyError(RuntimeError):
     def __init__(self, *, file_format: str, package: str, extra: str) -> None:
         super().__init__(
             f"{file_format} import needs the optional '{package}' package. "
-            f"Install it with: pip install waymark[{extra}]"
+            f'Install it with: pipx inject waymark-memory "waymark-memory[{extra}]"'
         )
         self.file_format = file_format
         self.package = package

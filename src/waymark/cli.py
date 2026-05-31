@@ -1565,7 +1565,7 @@ def import_pdf(
     """Import one explicit PDF file as a memory entry.
 
     Extracts only the existing text layer. Scanned or image-only PDFs are not
-    OCR'd. Requires the optional ``pypdf`` package (pip install waymark[pdf]).
+    OCR'd. Requires the optional ``pypdf`` package.
     """
 
     try:

@@ -9,7 +9,8 @@ capture messy thought -> structure memory card -> store locally -> retrieve with
 ```
 
 Full documentation lives at **https://shusingh.github.io/waymark/**.
-Downloadable packages live on **https://github.com/shusingh/waymark/releases**.
+The planned PyPI package name is **`waymark-memory`**; the installed command
+remains **`waymark`**.
 The complete CLI reference is generated from the Typer app, so use the docs site
 instead of hand-maintained command lists.
 
@@ -25,37 +26,38 @@ instead of hand-maintained command lists.
 
 ## Install
 
-Public release:
+After PyPI publishing is enabled:
+
+```bash
+pipx install waymark-memory
+waymark --version
+```
+
+Current GitHub Release:
 
 ```bash
 python -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+waymark --version
 ```
 
-From a source checkout:
+Platform-specific commands are in
+[Installation & Updates](docs/guides/installation.md).
+
+From source on Windows PowerShell:
+
+```powershell
+py -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev,docs,pdf]"
+```
+
+From source on macOS/Linux:
 
 ```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev,docs,pdf]"
 ```
-
-PDF import needs the optional PDF extra:
-
-```bash
-python -m pip install -e ".[pdf]"
-```
-
-Docs tooling is separate:
-
-```bash
-python -m pip install -e ".[docs]"
-mkdocs serve
-```
-
-For public downloads, Waymark's first distribution channel is
-[GitHub Releases](https://github.com/shusingh/waymark/releases): tagged releases
-build a wheel and source archive that people can install with `pip` or `pipx`.
-See [Installation & Updates](docs/guides/installation.md).
 
 ## First Minute
 

@@ -1,69 +1,171 @@
 # Installation & Updates
 
-Waymark is a Python CLI/TUI application. The recommended public download path is
-a [GitHub Release](https://github.com/shusingh/waymark/releases) containing a
-wheel and source archive. The current public release is `v0.2.0`.
+Waymark is a Python CLI/TUI application. The installed command is `waymark`.
+The planned PyPI distribution name is `waymark-memory` because `waymark` is
+already taken on PyPI by another project.
 
-## Install the public release
+## Recommended Install
 
-Use `pip` with the release wheel URL:
+Use `pipx` for a CLI app. It keeps Waymark isolated from your system Python
+while still exposing the `waymark` command.
 
-```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
-```
+=== "Windows PowerShell"
 
-If you use `pipx` for isolated command-line tools:
+    ```powershell
+    py -m pip install --user pipx
+    py -m pipx ensurepath
+    py -m pipx install waymark-memory
+    waymark --version
+    waymark today
+    ```
 
-```bash
-pipx install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
-```
+=== "macOS"
 
-Then run:
+    ```bash
+    brew install pipx
+    pipx ensurepath
+    pipx install waymark-memory
+    waymark --version
+    waymark today
+    ```
 
-```bash
-waymark --version
-waymark today
-```
+=== "Linux"
 
-## Install from source
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    python3 -m pipx install waymark-memory
+    waymark --version
+    waymark today
+    ```
 
-```bash
-git clone https://github.com/shusingh/waymark.git
-cd waymark
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev]"
-```
+If `waymark` is not found after installation, open a new terminal so the updated
+PATH from `pipx ensurepath` is loaded.
 
-PDF import needs the optional PDF extra:
+!!! warning "PyPI is not live yet"
+    Until the PyPI trusted-publisher setup is completed, use the GitHub Release
+    wheel below.
+
+## Current GitHub Release
+
+Install the current public release directly from GitHub:
+
+=== "Windows PowerShell"
+
+    ```powershell
+    py -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+    waymark --version
+    ```
+
+=== "macOS / Linux"
+
+    ```bash
+    python3 -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+    waymark --version
+    ```
+
+## Optional PDF Import
+
+PDF import needs the optional PDF extra. With PyPI:
+
+=== "Windows PowerShell"
+
+    ```powershell
+    py -m pipx inject waymark-memory "waymark-memory[pdf]"
+    ```
+
+=== "macOS"
+
+    ```bash
+    pipx inject waymark-memory "waymark-memory[pdf]"
+    ```
+
+=== "Linux"
+
+    ```bash
+    python3 -m pipx inject waymark-memory "waymark-memory[pdf]"
+    ```
+
+From a source checkout:
 
 ```bash
 python -m pip install -e ".[pdf]"
 ```
 
+## Install from Source
+
+=== "Windows PowerShell"
+
+    ```powershell
+    git clone https://github.com/shusingh/waymark.git
+    cd waymark
+    py -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+    python -m pip install -e ".[dev,docs,pdf]"
+    waymark --version
+    ```
+
+=== "macOS / Linux"
+
+    ```bash
+    git clone https://github.com/shusingh/waymark.git
+    cd waymark
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install -e ".[dev,docs,pdf]"
+    waymark --version
+    ```
+
 ## Update
+
+For a PyPI install:
+
+=== "Windows PowerShell"
+
+    ```powershell
+    py -m pipx upgrade waymark-memory
+    ```
+
+=== "macOS"
+
+    ```bash
+    pipx upgrade waymark-memory
+    ```
+
+=== "Linux"
+
+    ```bash
+    python3 -m pipx upgrade waymark-memory
+    ```
+
+For a GitHub wheel install, install the newer release wheel URL:
+
+```bash
+python -m pip install --upgrade https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+```
 
 For a source checkout:
 
 ```bash
 git pull
-python -m pip install -e ".[dev]"
+python -m pip install -e ".[dev,docs,pdf]"
 ```
 
-For a wheel install, install the newer release wheel URL:
+## Publishing to PyPI
 
-```bash
-python -m pip install --upgrade https://github.com/shusingh/waymark/releases/download/v0.1.1/waymark-0.1.1-py3-none-any.whl
-```
+Waymark uses PyPI Trusted Publishing rather than a long-lived API token. The
+project must first be configured in PyPI as a pending trusted publisher.
 
-## Release process
+Use these values:
 
-Maintainers create a downloadable package by tagging a version:
+| Field | Value |
+| --- | --- |
+| PyPI project name | `waymark-memory` |
+| Owner | `shusingh` |
+| Repository | `waymark` |
+| Workflow file | `pypi.yml` |
+| Environment | `pypi` |
 
-```bash
-git tag v0.2.0
-git push origin v0.2.0
-```
-
-The release workflow runs linting, typing, tests, package build, and metadata
-checks, then uploads `dist/*` to a GitHub Release.
+After that, maintainers can publish by cutting a release tag. The PyPI workflow
+builds the package, checks metadata, verifies the tag matches the package
+version, and publishes to PyPI from GitHub Actions.

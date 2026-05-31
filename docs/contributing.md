@@ -21,11 +21,21 @@ explicit boundaries.
 
 ## Environment
 
-```bash
-python -m venv .venv
-.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev,pdf,docs]"
-```
+=== "Windows PowerShell"
+
+    ```powershell
+    py -m venv .venv
+    .\.venv\Scripts\Activate.ps1
+    python -m pip install -e ".[dev,pdf,docs]"
+    ```
+
+=== "macOS / Linux"
+
+    ```bash
+    python3 -m venv .venv
+    source .venv/bin/activate
+    python -m pip install -e ".[dev,pdf,docs]"
+    ```
 
 ## Standards
 
@@ -94,9 +104,18 @@ and:
 __version__ = "0.2.0"
 ```
 
-The workflow verifies the code, confirms the tag/version match, builds the
-package, checks the package metadata, installs the built wheel in a fresh
-environment, and uploads `dist/*` to the release.
+The release workflow verifies the code, confirms the tag/version match, builds
+the package, checks the package metadata, installs the built wheel in a fresh
+environment, and uploads `dist/*` to the GitHub Release.
+
+If PyPI Trusted Publishing is configured, `.github/workflows/pypi.yml` also
+publishes the same tag to PyPI as `waymark-memory`. The PyPI package name differs
+from the import and command names because `waymark` is already occupied on PyPI.
+The installed command remains:
+
+```bash
+waymark
+```
 
 After the release, bump `main` back to the next development version:
 
