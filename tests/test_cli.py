@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
 from pytest import MonkeyPatch
 from typer.testing import CliRunner
 
@@ -1417,6 +1419,69 @@ def test_import_text_cli_imports_one_file_and_skips_duplicates(tmp_path: Path) -
     assert sources_result.exit_code == 0
     assert "text" in sources_result.output
     assert "note.txt" in sources_result.output
+
+
+def test_import_docx_cli_imports_one_file_and_skips_duplicates(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    docx_path = make_docx(
+        tmp_path / "note.docx",
+        ["CLI docx import", "Imported through the docx command."],
+    )
+
+    first_result = runner.invoke(app, ["import", "docx", str(docx_path)], env=env)
+    second_result = runner.invoke(app, ["import", "docx", str(docx_path)], env=env)
+
+    assert first_result.exit_code == 0
+    assert "Imported DOCX" in first_result.output
+    assert "CLI docx import" in first_result.output
+    assert second_result.exit_code == 0
+    assert "already imported" in second_result.output
+
+    sources_result = runner.invoke(app, ["sources", "list"], env=env)
+    assert sources_result.exit_code == 0
+    assert "docx" in sources_result.output
+    assert "note.docx" in sources_result.output
+
+
+def test_import_pdf_cli_preview_does_not_save(
+    tmp_path: Path, make_minimal_pdf: Callable[[Path, str], Path]
+) -> None:
+    pytest.importorskip("pypdf")
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    pdf_path = make_minimal_pdf(tmp_path / "note.pdf", "Hello Waymark")
+
+    result = runner.invoke(app, ["import", "pdf", str(pdf_path), "--preview"], env=env)
+
+    assert result.exit_code == 0
+    assert "PDF Preview" in result.output
+    assert "not saved" in result.output
+
+    sources_result = runner.invoke(app, ["sources", "list"], env=env)
+    assert sources_result.exit_code == 0
+    assert "No imported sources yet" in sources_result.output
+
+
+def test_import_pdf_cli_imports_one_file(
+    tmp_path: Path, make_minimal_pdf: Callable[[Path, str], Path]
+) -> None:
+    pytest.importorskip("pypdf")
+    runner = CliRunner()
+    env = {"WAYMARK_HOME": str(tmp_path / "home")}
+    pdf_path = make_minimal_pdf(tmp_path / "note.pdf", "Hello Waymark")
+
+    result = runner.invoke(app, ["import", "pdf", str(pdf_path)], env=env)
+
+    assert result.exit_code == 0
+    assert "Imported PDF" in result.output
+
+    sources_result = runner.invoke(app, ["sources", "list"], env=env)
+    assert sources_result.exit_code == 0
+    assert "pdf" in sources_result.output
+    assert "note.pdf" in sources_result.output
 
 
 def test_import_markdown_folder_cli_previews_without_importing(tmp_path: Path) -> None:

@@ -20,8 +20,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+pdf = [
+  "pypdf>=4.0"
+]
 dev = [
   "mypy>=1.10",
+  "pypdf>=4.0",
   "pytest>=8.2",
   "ruff>=0.5"
 ]

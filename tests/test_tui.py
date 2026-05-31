@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -839,6 +840,34 @@ def test_tui_import_text_flow_saves_memory(tmp_path: Path) -> None:
         assert entries[0].title == "Guided Text Import"
         assert entries[0].source == "source:1"
         assert entries[0].tags == ("import", "text")
+
+    asyncio.run(run_flow())
+
+
+def test_tui_import_docx_flow_saves_memory(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    async def run_flow() -> None:
+        db_path = tmp_path / "waymark.sqlite3"
+        docx_path = make_docx(
+            tmp_path / "note.docx",
+            ["Guided Docx Import", "Imported from the guided docx action."],
+        )
+        app = WaymarkApp(db_path=db_path)
+
+        async with app.run_test(size=(150, 44)) as pilot:
+            await pilot.pause(0.2)
+            await pilot.click(app.screen.query_one("#import"))
+            await pilot.pause(0.2)
+            app.screen.query_one("#import-path", Input).value = str(docx_path)
+            await pilot.click(app.screen.query_one("#import-docx"))
+            await pilot.pause(0.2)
+
+        entries = list_entries(db_path)
+        assert len(entries) == 1
+        assert entries[0].title == "Guided Docx Import"
+        assert entries[0].source == "source:1"
+        assert entries[0].tags == ("docx", "import")
 
     asyncio.run(run_flow())
 

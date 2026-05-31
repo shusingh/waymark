@@ -1,19 +1,30 @@
 from __future__ import annotations
 
+import sys
+from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
 from waymark.imports import (
+    DuplicateDocxImportError,
     DuplicateMarkdownImportError,
+    DuplicatePdfImportError,
     DuplicateTextImportError,
+    MissingImportDependencyError,
+    extract_docx_text,
     extract_markdown_summary,
     extract_markdown_title,
+    extract_pdf_text,
+    import_docx_file,
     import_markdown_file,
     import_markdown_folder,
+    import_pdf_file,
     import_text_file,
+    preview_docx_file,
     preview_markdown_file,
     preview_markdown_folder,
+    preview_pdf_file,
     preview_text_file,
 )
 from waymark.storage import init_database, list_entries, list_sources
@@ -197,3 +208,157 @@ def test_import_markdown_folder_skips_duplicates(tmp_path: Path) -> None:
     assert len(second.skipped) == 2
     assert "already imported" in second.skipped[0]
     assert len(list_entries(db_path)) == 2
+
+
+def test_extract_docx_text_reads_paragraphs(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    docx_path = make_docx(
+        tmp_path / "note.docx",
+        ["Docx Title", "Body paragraph with detail."],
+    )
+
+    assert extract_docx_text(docx_path) == "Docx Title\n\nBody paragraph with detail."
+
+
+def test_extract_docx_text_rejects_non_zip(tmp_path: Path) -> None:
+    not_docx = tmp_path / "broken.docx"
+    not_docx.write_text("this is not a zip archive", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="Could not read DOCX file"):
+        extract_docx_text(not_docx)
+
+
+def test_import_docx_file_creates_source_and_entry(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    docx_path = make_docx(
+        tmp_path / "note.docx",
+        ["Docx Memory", "This becomes a sourced docx memory."],
+    )
+    init_database(db_path)
+
+    preview = preview_docx_file(docx_path)
+    result = import_docx_file(db_path, docx_path)
+
+    entries = list_entries(db_path)
+    sources = list_sources(db_path)
+    assert preview.title == "Docx Memory"
+    assert result.entry_id == 1
+    assert result.source_id == 1
+    assert entries[0].title == "Docx Memory"
+    assert entries[0].source == "source:1"
+    assert entries[0].tags == ("docx", "import")
+    assert sources[0].type == "docx"
+    assert sources[0].path == str(docx_path.resolve())
+
+
+def test_preview_docx_file_requires_extractable_text(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    docx_path = make_docx(tmp_path / "empty.docx", [])
+
+    with pytest.raises(ValueError, match="No extractable text"):
+        preview_docx_file(docx_path)
+
+
+def test_preview_docx_file_rejects_wrong_suffix(tmp_path: Path) -> None:
+    text_file = tmp_path / "note.txt"
+    text_file.write_text("not a docx", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="only accepts"):
+        preview_docx_file(text_file)
+
+
+def test_import_docx_file_skips_duplicate_path_by_default(
+    tmp_path: Path, make_docx: Callable[[Path, list[str]], Path]
+) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    docx_path = make_docx(tmp_path / "note.docx", ["Docx", "Only import once."])
+    init_database(db_path)
+
+    import_docx_file(db_path, docx_path)
+
+    with pytest.raises(DuplicateDocxImportError, match="already imported"):
+        import_docx_file(db_path, docx_path)
+
+    forced = import_docx_file(db_path, docx_path, force=True)
+    assert forced.entry_id == 2
+    assert len(list_entries(db_path)) == 2
+    assert len(list_sources(db_path)) == 2
+
+
+def test_extract_pdf_text_reads_text_layer(
+    tmp_path: Path, make_minimal_pdf: Callable[[Path, str], Path]
+) -> None:
+    pytest.importorskip("pypdf")
+    pdf_path = make_minimal_pdf(tmp_path / "note.pdf", "Hello Waymark")
+
+    assert "Waymark" in extract_pdf_text(pdf_path)
+
+
+def test_extract_pdf_text_without_pypdf_raises_missing_dependency(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pdf_path = tmp_path / "note.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 placeholder")
+    # Make `import pypdf` fail as if the optional package were not installed.
+    monkeypatch.setitem(sys.modules, "pypdf", None)
+
+    with pytest.raises(MissingImportDependencyError, match="pypdf"):
+        extract_pdf_text(pdf_path)
+
+
+def test_import_pdf_file_creates_source_and_entry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    pdf_path = tmp_path / "note.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 placeholder")
+    monkeypatch.setattr(
+        "waymark.imports.extract_pdf_text",
+        lambda _path: "PDF Memory\n\nExtracted body text.",
+    )
+    init_database(db_path)
+
+    preview = preview_pdf_file(pdf_path)
+    result = import_pdf_file(db_path, pdf_path)
+
+    entries = list_entries(db_path)
+    sources = list_sources(db_path)
+    assert preview.title == "PDF Memory"
+    assert result.entry_id == 1
+    assert entries[0].tags == ("import", "pdf")
+    assert sources[0].type == "pdf"
+    assert sources[0].path == str(pdf_path.resolve())
+
+
+def test_preview_pdf_file_requires_extractable_text(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    pdf_path = tmp_path / "scan.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 placeholder")
+    monkeypatch.setattr("waymark.imports.extract_pdf_text", lambda _path: "")
+
+    with pytest.raises(ValueError, match="No extractable text"):
+        preview_pdf_file(pdf_path)
+
+
+def test_import_pdf_file_skips_duplicate_path_by_default(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    db_path = tmp_path / "waymark.sqlite3"
+    pdf_path = tmp_path / "note.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 placeholder")
+    monkeypatch.setattr("waymark.imports.extract_pdf_text", lambda _path: "Imported once.")
+    init_database(db_path)
+
+    import_pdf_file(db_path, pdf_path)
+
+    with pytest.raises(DuplicatePdfImportError, match="already imported"):
+        import_pdf_file(db_path, pdf_path)
+
+    forced = import_pdf_file(db_path, pdf_path, force=True)
+    assert forced.entry_id == 2
+    assert len(list_sources(db_path)) == 2

@@ -21,7 +21,7 @@ includes:
 - Guided Textual flows for capture, timeline, memory detail, reflection,
   decisions, import, export, and doctor checks
 - CLI commands for capture, retrieval, editing, reflection, decisions,
-  Markdown/text import, Markdown export, journey map, and setup
+  Markdown/text/PDF/DOCX import, Markdown export, journey map, and setup
 - A gitignored local handoff folder at `.waymark-local/`
 
 ## Setup
@@ -70,6 +70,9 @@ waymark reflections trends --period week --tag focus --type project
 waymark reflections show 1
 waymark import markdown .\notes\memory.md
 waymark import text .\notes\memory.txt
+waymark import pdf .\docs\brief.pdf
+waymark import pdf .\docs\brief.pdf --preview
+waymark import docx .\docs\weekly.docx
 waymark import markdown-folder .\notes
 waymark import markdown-folder .\notes --apply
 waymark sources list
@@ -108,7 +111,7 @@ card without saving it. This works for both app-only and local-AI drafts.
 
 The guided Import flow mirrors that safety model: a folder path must be
 previewed before Apply Preview writes entries. It can also import one explicit
-Markdown or plain text file.
+Markdown, plain text, PDF, or Word (.docx) file.
 
 The guided Memory Detail view shows a memory by ID with source and linked
 decision context.
@@ -199,6 +202,15 @@ imported, Waymark skips it unless you add `--force`.
 
 `waymark import text FILE` imports one explicit `.txt` or `.text` file as a
 sourced memory with `import,text` tags and the same duplicate-path protection.
+
+`waymark import pdf FILE` imports one explicit `.pdf` file as a sourced memory.
+It extracts only the existing text layer; scanned or image-only PDFs are not
+OCR'd, and Waymark reports when no text could be extracted. PDF import needs the
+optional `pypdf` package (`pip install waymark[pdf]`). Add `--preview` (or
+`--dry-run`) to inspect the extracted card without saving, and `--force` to
+re-import a path. `waymark import docx FILE` imports one explicit Word `.docx`
+file using only the standard library, extracting paragraph text (no styles,
+images, or embedded objects) with the same preview and duplicate-path options.
 
 `waymark import markdown-folder FOLDER` previews Markdown files from one
 explicit folder without importing them. Add `--apply` to import the previewed

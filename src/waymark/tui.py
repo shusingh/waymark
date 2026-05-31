@@ -21,11 +21,16 @@ from waymark.exports import (
     write_markdown_export,
 )
 from waymark.imports import (
+    DuplicateDocxImportError,
     DuplicateMarkdownImportError,
+    DuplicatePdfImportError,
     DuplicateTextImportError,
     MarkdownFolderPreview,
+    MissingImportDependencyError,
+    import_docx_file,
     import_markdown_file,
     import_markdown_preview,
+    import_pdf_file,
     import_text_file,
     preview_markdown_folder,
 )
@@ -1241,23 +1246,27 @@ class ImportScreen(WaymarkScreen):
         with Container(id="shell"):
             yield Static("Import My World", classes="screen-title")
             yield Static(
-                "Import one Markdown or text file, or preview one explicit folder before applying.",
+                "Import one Markdown, text, PDF, or Word file, or preview one explicit "
+                "folder before applying.",
                 classes="subtle",
             )
             with Horizontal(id="import-controls"):
                 yield Input(
-                    placeholder="C:\\path\\to\\note.md, note.txt, or folder",
+                    placeholder="C:\\path\\to\\note.md, .txt, .pdf, .docx, or folder",
                     id="import-path",
                 )
                 yield Button("Import Markdown", id="import-markdown", variant="primary")
                 yield Button("Import Text", id="import-text")
+            with Horizontal(id="import-file-buttons"):
+                yield Button("Import PDF", id="import-pdf")
+                yield Button("Import DOCX", id="import-docx")
             with Horizontal(id="import-folder-options"):
                 yield Input(value="25", placeholder="limit", id="import-limit")
                 yield Input(value="no", placeholder="recursive? yes/no", id="import-recursive")
                 yield Button("Preview Folder", id="preview-folder")
                 yield Button("Apply Preview", id="apply-folder", variant="success", disabled=True)
             yield Static(
-                "Choose a .md, .markdown, .txt, .text, or folder path.",
+                "Choose a .md, .markdown, .txt, .text, .pdf, .docx, or folder path.",
                 id="import-status",
             )
         yield Footer()
@@ -1270,6 +1279,10 @@ class ImportScreen(WaymarkScreen):
             self.import_markdown_from_form()
         elif event.button.id == "import-text":
             self.import_text_from_form()
+        elif event.button.id == "import-pdf":
+            self.import_pdf_from_form()
+        elif event.button.id == "import-docx":
+            self.import_docx_from_form()
         elif event.button.id == "preview-folder":
             self.preview_folder_from_form()
         elif event.button.id == "apply-folder":
@@ -1308,6 +1321,55 @@ class ImportScreen(WaymarkScreen):
             result = import_text_file(self.db_path, Path(raw_path))
         except (
             DuplicateTextImportError,
+            FileNotFoundError,
+            ValueError,
+            UnicodeDecodeError,
+        ) as error:
+            self.query_one("#import-status", Static).update(str(error))
+            return
+
+        self.query_one("#import-status", Static).update(
+            f"Imported #{result.entry_id}: {result.title}\n"
+            f"Source #{result.source_id}\n\n{result.summary}"
+        )
+        self.query_one("#import-path", Input).value = ""
+        self.clear_folder_preview()
+
+    def import_pdf_from_form(self) -> None:
+        raw_path = self.query_one("#import-path", Input).value.strip()
+        if not raw_path:
+            self.query_one("#import-status", Static).update("Enter one PDF file path.")
+            return
+
+        try:
+            result = import_pdf_file(self.db_path, Path(raw_path))
+        except (
+            DuplicatePdfImportError,
+            MissingImportDependencyError,
+            FileNotFoundError,
+            ValueError,
+            UnicodeDecodeError,
+        ) as error:
+            self.query_one("#import-status", Static).update(str(error))
+            return
+
+        self.query_one("#import-status", Static).update(
+            f"Imported #{result.entry_id}: {result.title}\n"
+            f"Source #{result.source_id}\n\n{result.summary}"
+        )
+        self.query_one("#import-path", Input).value = ""
+        self.clear_folder_preview()
+
+    def import_docx_from_form(self) -> None:
+        raw_path = self.query_one("#import-path", Input).value.strip()
+        if not raw_path:
+            self.query_one("#import-status", Static).update("Enter one DOCX file path.")
+            return
+
+        try:
+            result = import_docx_file(self.db_path, Path(raw_path))
+        except (
+            DuplicateDocxImportError,
             FileNotFoundError,
             ValueError,
             UnicodeDecodeError,
@@ -1914,6 +1976,16 @@ class WaymarkApp(App[None]):
     }
 
     #import-controls Button {
+        width: 22;
+        margin: 0 1;
+    }
+
+    #import-file-buttons {
+        height: 5;
+        margin: 1 0;
+    }
+
+    #import-file-buttons Button {
         width: 22;
         margin: 0 1;
     }

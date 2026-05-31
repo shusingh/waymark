@@ -22,12 +22,19 @@ from waymark.exports import (
     write_markdown_export,
 )
 from waymark.imports import (
+    DuplicateDocxImportError,
     DuplicateMarkdownImportError,
+    DuplicatePdfImportError,
     DuplicateTextImportError,
+    MissingImportDependencyError,
+    import_docx_file,
     import_markdown_file,
     import_markdown_folder,
+    import_pdf_file,
     import_text_file,
+    preview_docx_file,
     preview_markdown_folder,
+    preview_pdf_file,
 )
 from waymark.journey import (
     JourneyMap,
@@ -1471,6 +1478,119 @@ def import_text(
                 f"[dim]entry: {result.entry_id} - source: {result.source_id}[/dim]"
             ),
             title="Imported Text",
+            border_style="green",
+        )
+    )
+
+
+@import_app.command("pdf")
+def import_pdf(
+    path: Annotated[Path, typer.Argument(help="Path to one .pdf file.")],
+    preview: Annotated[
+        bool,
+        typer.Option("--preview", "--dry-run", help="Show extracted card without saving."),
+    ] = False,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Import even if this exact file path was imported before."),
+    ] = False,
+) -> None:
+    """Import one explicit PDF file as a memory entry.
+
+    Extracts only the existing text layer. Scanned or image-only PDFs are not
+    OCR'd. Requires the optional ``pypdf`` package (pip install waymark[pdf]).
+    """
+
+    try:
+        if preview:
+            draft = preview_pdf_file(path)
+            console.print(
+                Panel(
+                    (
+                        f"[bold]{draft.title}[/bold]\n\n{draft.summary}\n\n"
+                        f"[dim]{len(draft.raw_text)} characters extracted - not saved[/dim]"
+                    ),
+                    title="PDF Preview",
+                    border_style="yellow3",
+                )
+            )
+            return
+
+        init_database(database_path())
+        result = import_pdf_file(database_path(), path, force=force)
+    except DuplicatePdfImportError as error:
+        console.print(f"[yellow]{error}[/yellow]")
+        console.print("[dim]Use --force to import another copy.[/dim]")
+        return
+    except MissingImportDependencyError as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+    except (FileNotFoundError, ValueError, UnicodeDecodeError) as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    console.print(
+        Panel(
+            (
+                f"[bold]{result.title}[/bold]\n\n{result.summary}\n\n"
+                f"[dim]entry: {result.entry_id} - source: {result.source_id}[/dim]"
+            ),
+            title="Imported PDF",
+            border_style="green",
+        )
+    )
+
+
+@import_app.command("docx")
+def import_docx(
+    path: Annotated[Path, typer.Argument(help="Path to one .docx file.")],
+    preview: Annotated[
+        bool,
+        typer.Option("--preview", "--dry-run", help="Show extracted card without saving."),
+    ] = False,
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Import even if this exact file path was imported before."),
+    ] = False,
+) -> None:
+    """Import one explicit Word .docx file as a memory entry.
+
+    Extracts paragraph text only. Styles, images, and embedded objects are not
+    imported.
+    """
+
+    try:
+        if preview:
+            draft = preview_docx_file(path)
+            console.print(
+                Panel(
+                    (
+                        f"[bold]{draft.title}[/bold]\n\n{draft.summary}\n\n"
+                        f"[dim]{len(draft.raw_text)} characters extracted - not saved[/dim]"
+                    ),
+                    title="DOCX Preview",
+                    border_style="yellow3",
+                )
+            )
+            return
+
+        init_database(database_path())
+        result = import_docx_file(database_path(), path, force=force)
+    except DuplicateDocxImportError as error:
+        console.print(f"[yellow]{error}[/yellow]")
+        console.print("[dim]Use --force to import another copy.[/dim]")
+        return
+    except (FileNotFoundError, ValueError, UnicodeDecodeError) as error:
+        console.print(f"[red]{error}[/red]")
+        raise typer.Exit(code=1) from error
+
+    console.print(
+        Panel(
+            (
+                f"[bold]{result.title}[/bold]\n\n{result.summary}\n\n"
+                f"[dim]entry: {result.entry_id} - source: {result.source_id}[/dim]"
+            ),
+            title="Imported DOCX",
             border_style="green",
         )
     )
