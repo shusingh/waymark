@@ -120,7 +120,7 @@ waymark
 After the release, bump `main` back to the next development version:
 
 ```bash
-git commit -am "Start 0.3.0 development"
+git commit -am "Start 0.4.0 development"
 ```
 
 For the first release, the exact commands were:
