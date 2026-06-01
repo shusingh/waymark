@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling<1.30"]
 build-backend = "hatchling.build"
 
 [project]
 name = "waymark-memory"
-version = "0.3.0.dev0"
+version = "0.3.0"
 description = "A local-first terminal companion for personal memory, reflection, and decisions."
 readme = "README.md"
 requires-python = ">=3.11"

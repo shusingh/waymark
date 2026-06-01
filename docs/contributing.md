@@ -86,22 +86,22 @@ development version to the exact public version, then commit that release prep.
 Push a matching version tag to start the release workflow:
 
 ```bash
-git commit -am "Prepare release 0.2.0"
-git tag v0.2.0
+git commit -am "Prepare release 0.3.0"
+git tag v0.3.0
 git push origin main
-git push origin v0.2.0
+git push origin v0.3.0
 ```
 
-The tag must match the package version exactly. For example, `v0.2.0` requires:
+The tag must match the package version exactly. For example, `v0.3.0` requires:
 
 ```toml
-version = "0.2.0"
+version = "0.3.0"
 ```
 
 and:
 
 ```python
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 ```
 
 The release workflow verifies the code, confirms the tag/version match, builds

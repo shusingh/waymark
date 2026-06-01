@@ -13,12 +13,12 @@ capture -> timeline -> ask with sources -> reflect -> review decisions
 ```
 
 !!! note "Package name"
-    The PyPI distribution is planned as `waymark-memory` because `waymark` is
-    already used by another package. The installed command remains `waymark`.
+    The PyPI distribution is `waymark-memory` because `waymark` is already used
+    by another package. The installed command remains `waymark`.
 
 ## Install
 
-After PyPI publishing is enabled, install Waymark with `pipx`:
+Install Waymark with `pipx`:
 
 === "Windows PowerShell"
 
@@ -47,10 +47,10 @@ After PyPI publishing is enabled, install Waymark with `pipx`:
     waymark --version
     ```
 
-Until PyPI publishing is enabled, install the latest GitHub Release wheel:
+You can also install the latest GitHub Release wheel directly:
 
 ```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
 ```
 
 ## First minute

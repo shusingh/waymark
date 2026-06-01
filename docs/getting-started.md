@@ -29,8 +29,8 @@ it again, ask a grounded question, and reflect.
     python3 -m pipx install waymark-memory
     ```
 
-Until PyPI is live, use the GitHub Release wheel from
-[Installation & Updates](guides/installation.md).
+The [Installation & Updates](guides/installation.md) guide also includes direct
+GitHub Release wheel commands.
 
 ## 2. Pick where your data lives
 

@@ -1,8 +1,8 @@
 # Installation & Updates
 
 Waymark is a Python CLI/TUI application. The installed command is `waymark`.
-The planned PyPI distribution name is `waymark-memory` because `waymark` is
-already taken on PyPI by another project.
+The PyPI distribution name is `waymark-memory` because `waymark` is already
+taken on PyPI by another project.
 
 ## Recommended Install
 
@@ -42,10 +42,6 @@ while still exposing the `waymark` command.
 If `waymark` is not found after installation, open a new terminal so the updated
 PATH from `pipx ensurepath` is loaded.
 
-!!! warning "PyPI is not live yet"
-    Until the PyPI trusted-publisher setup is completed, use the GitHub Release
-    wheel below.
-
 ## Current GitHub Release
 
 Install the current public release directly from GitHub:
@@ -53,14 +49,14 @@ Install the current public release directly from GitHub:
 === "Windows PowerShell"
 
     ```powershell
-    py -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+    py -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
     waymark --version
     ```
 
 === "macOS / Linux"
 
     ```bash
-    python3 -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+    python3 -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
     waymark --version
     ```
 
@@ -141,7 +137,7 @@ For a PyPI install:
 For a GitHub wheel install, install the newer release wheel URL:
 
 ```bash
-python -m pip install --upgrade https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+python -m pip install --upgrade https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
 ```
 
 For a source checkout:
@@ -154,7 +150,8 @@ python -m pip install -e ".[dev,docs,pdf]"
 ## Publishing to PyPI
 
 Waymark uses PyPI Trusted Publishing rather than a long-lived API token. The
-project must first be configured in PyPI as a pending trusted publisher.
+project is published from the tag workflow after the trusted publisher is
+configured in PyPI.
 
 Use these values:
 

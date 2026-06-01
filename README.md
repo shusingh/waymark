@@ -9,8 +9,8 @@ capture messy thought -> structure memory card -> store locally -> retrieve with
 ```
 
 Full documentation lives at **https://shusingh.github.io/waymark/**.
-The planned PyPI package name is **`waymark-memory`**; the installed command
-remains **`waymark`**.
+The PyPI package name is **`waymark-memory`**; the installed command remains
+**`waymark`**.
 The complete CLI reference is generated from the Typer app, so use the docs site
 instead of hand-maintained command lists.
 
@@ -26,7 +26,7 @@ instead of hand-maintained command lists.
 
 ## Install
 
-After PyPI publishing is enabled:
+Recommended install:
 
 ```bash
 pipx install waymark-memory
@@ -36,7 +36,7 @@ waymark --version
 Current GitHub Release:
 
 ```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.2.0/waymark-0.2.0-py3-none-any.whl
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
 waymark --version
 ```
 
