@@ -36,12 +36,12 @@ waymark --version
 Current GitHub Release:
 
 ```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.1/waymark_memory-0.3.1-py3-none-any.whl
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.2/waymark_memory-0.3.2-py3-none-any.whl
 waymark --version
 ```
 
 Platform-specific commands are in
-[Installation & Updates](docs/guides/installation.md).
+[Installation & Updates](https://shusingh.github.io/waymark/guides/installation/).
 
 From source on Windows PowerShell:
 
@@ -70,7 +70,7 @@ waymark ask "import flow"
 waymark reflect --period week
 ```
 
-Start with [Getting Started](docs/getting-started.md), or open the live
+Start with [Getting Started](https://shusingh.github.io/waymark/getting-started/), or open the live
 [CLI reference](https://shusingh.github.io/waymark/reference/cli/).
 
 ## Development

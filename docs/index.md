@@ -50,7 +50,7 @@ Install Waymark with `pipx`:
 You can also install the latest GitHub Release wheel directly:
 
 ```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.1/waymark_memory-0.3.1-py3-none-any.whl
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.2/waymark_memory-0.3.2-py3-none-any.whl
 ```
 
 ## First minute
