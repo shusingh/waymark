@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "waymark-memory"
-version = "0.4.0.dev0"
+version = "0.3.1"
 description = "A local-first terminal companion for personal memory, reflection, and decisions."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,7 +12,18 @@ license = { text = "MIT" }
 authors = [
   { name = "Waymark Contributors" }
 ]
-keywords = ["local-first", "memory", "notes", "reflection", "sqlite", "terminal"]
+keywords = [
+  "agent",
+  "ai",
+  "local-ai",
+  "local-first",
+  "memory",
+  "notes",
+  "personal-knowledge",
+  "reflection",
+  "sqlite",
+  "terminal"
+]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",

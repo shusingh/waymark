@@ -36,7 +36,7 @@ waymark --version
 Current GitHub Release:
 
 ```bash
-python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
+python -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.1/waymark_memory-0.3.1-py3-none-any.whl
 waymark --version
 ```
 
@@ -79,7 +79,7 @@ Runtime data defaults to `~/.waymark`. For local development, keep test data out
 of your real profile:
 
 ```powershell
-$env:WAYMARK_HOME = "D:\Code\waymark\.waymark-local\runtime"
+$env:WAYMARK_HOME = "$PWD\.waymark-runtime"
 ```
 
 Before committing code changes:

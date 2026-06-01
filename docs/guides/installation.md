@@ -49,14 +49,14 @@ Install the current public release directly from GitHub:
 === "Windows PowerShell"
 
     ```powershell
-    py -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
+    py -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.1/waymark_memory-0.3.1-py3-none-any.whl
     waymark --version
     ```
 
 === "macOS / Linux"
 
     ```bash
-    python3 -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
+    python3 -m pip install https://github.com/shusingh/waymark/releases/download/v0.3.1/waymark_memory-0.3.1-py3-none-any.whl
     waymark --version
     ```
 
@@ -137,7 +137,7 @@ For a PyPI install:
 For a GitHub wheel install, install the newer release wheel URL:
 
 ```bash
-python -m pip install --upgrade https://github.com/shusingh/waymark/releases/download/v0.3.0/waymark_memory-0.3.0-py3-none-any.whl
+python -m pip install --upgrade https://github.com/shusingh/waymark/releases/download/v0.3.1/waymark_memory-0.3.1-py3-none-any.whl
 ```
 
 For a source checkout:
